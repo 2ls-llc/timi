@@ -1,6 +1,9 @@
 # xcodegen spec — for anyone who wants an Xcode project for signing/debugging:
 #   brew install xcodegen && xcodegen generate --spec Packaging/project.yml
 # The canonical build stays `swift build` / Packaging/build.sh.
+#
+# Two targets mirror the SwiftPM layout: the app imports the PixelPalKit
+# framework, matching the `import PixelPalKit` statements in Sources/PixelPal.
 name: PixelPal
 options:
   bundleIdPrefix: com.msull92
@@ -11,13 +14,22 @@ packages:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: 2.0.0
 targets:
+  PixelPalKit:
+    type: framework
+    platform: macOS
+    sources:
+      - path: ../Sources/PixelPalKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.pixelpalkit
   PixelPal:
     type: application
     platform: macOS
     sources:
       - path: ../Sources/PixelPal
-      - path: ../Sources/PixelPalKit
     dependencies:
+      - target: PixelPalKit
+        embed: true
       - package: KeyboardShortcuts
     info:
       path: Info.plist

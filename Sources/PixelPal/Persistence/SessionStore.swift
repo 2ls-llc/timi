@@ -8,6 +8,8 @@ import PixelPalKit
 final class SessionStore {
     private(set) var records: [SessionRecord] = []
     private let fileURL: URL
+    /// Fired by resetAll — lets the app invalidate any held record indices.
+    var onReset: (() -> Void)?
 
     init(fileURL: URL? = nil) {
         if let fileURL {
@@ -60,5 +62,6 @@ final class SessionStore {
     func resetAll() {
         records = []
         save()
+        onReset?()
     }
 }

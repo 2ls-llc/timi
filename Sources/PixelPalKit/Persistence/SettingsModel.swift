@@ -21,6 +21,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var launchAtLogin: Bool = false
     public var palVisible: Bool = true
     public var lastDurationMs: Double = 1_500_000
+    /// Last resting position per screen identifier (display UUID) — [x, y] in
+    /// global AppKit coordinates. Optional so older stored settings still decode.
+    public var lastPositionPerScreen: [String: [Double]]? = nil
 
     public init() {}
 }

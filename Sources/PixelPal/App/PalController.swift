@@ -56,8 +56,16 @@ final class PalController: NSObject, PalViewDelegate {
         self.settingsStore = settingsStore
         let config = CharacterConfig.config(for: settingsStore.settings.character)
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        // Prototype home: (w·0.5, h·0.45 from the top).
-        let home = Vec2(screen.midX, screen.minY + screen.height * 0.55)
+        // Prototype home: (w·0.5, h·0.45 from the top) — unless this screen
+        // remembers where the pal last rested (§3).
+        var home = Vec2(screen.midX, screen.minY + screen.height * 0.55)
+        if let main = NSScreen.main,
+           let stored = settingsStore.settings.lastPositionPerScreen?[Self.screenID(for: main)],
+           stored.count == 2 {
+            let rect = PixelPalKit.Rect(x: screen.origin.x, y: screen.origin.y,
+                                        w: screen.width, h: screen.height)
+            home = Physics.clampHome(Vec2(stored[0], stored[1]), in: rect)
+        }
         engine = PalEngine(config: config, seed: UInt64.random(in: .min ... .max),
                            tMs: CACurrentMediaTime() * 1000, home: home, hearts: 0)
         timer.setDuration(ms: settingsStore.settings.lastDurationMs)
@@ -141,6 +149,7 @@ final class PalController: NSObject, PalViewDelegate {
 
         controlsStrip?.updateVisibility(hovered: hovered, mode: timer.mode, tMs: tMs)
         updateCadence(hovered: hovered, cursor: cursor, tMs: tMs)
+        rememberPositionIfSettled(tMs: tMs)
 
         // VoiceOver value: refresh when the displayed second changes.
         let axSecond = Int(input.remainingMs / 1000)
@@ -170,10 +179,12 @@ final class PalController: NSObject, PalViewDelegate {
     }
 
     private var lastCanvasBuffer: [UInt8] = []
-    private var lastScaleX = CGFloat.nan
-    private var lastScaleY = CGFloat.nan
-    private var lastCanvasOpacity = Float.nan
-    private var lastGlowOpacity = Float.nan
+    // Impossible-but-comparable sentinels: NaN would poison the comparisons
+    // below (abs(x − .nan) > ε is always false) and freeze the layers forever.
+    private var lastScaleX: CGFloat = -1
+    private var lastScaleY: CGFloat = -1
+    private var lastCanvasOpacity: Float = -1
+    private var lastGlowOpacity: Float = -1
 
     private func applyToLayers() {
         let f = engine.flags
@@ -226,7 +237,7 @@ final class PalController: NSObject, PalViewDelegate {
         let p = panelPoint(from: cursor)
         if PanelGeometry.creatureRect.contains(p) { return true }
         if let strip = controlsStrip, !strip.isHidden, strip.alphaValue > 0.01,
-           strip.frame.contains(p) { return true }
+           strip.chipRowFrameInPanel.contains(p) { return true }
         return false
     }
 
@@ -323,7 +334,9 @@ final class PalController: NSObject, PalViewDelegate {
         guard steps != 0 else { return }
         // Scroll up = more time (prototype: wheel up = +1 min), ±1 min per notch.
         if timer.nudgeDuration(byMinutes: steps) {
+            settingsStore.update { $0.lastDurationMs = timer.durationMs }
             sound.play(.blip)
+            controlsStrip?.refreshChips()
         }
     }
 
@@ -383,6 +396,11 @@ final class PalController: NSObject, PalViewDelegate {
 
     func setNotificationsEnabled(_ enabled: Bool) {
         settingsStore.update { $0.notificationsEnabled = enabled }
+        // Enabling mid-session: request permission now, or the current session's
+        // completion notification would be silently dropped (.notDetermined).
+        if enabled && (timer.mode == .running || timer.mode == .paused) {
+            notifier.requestPermissionIfNeeded(enabled: true)
+        }
     }
 
     func setCabinet(_ on: Bool) {
@@ -497,6 +515,42 @@ final class PalController: NSObject, PalViewDelegate {
         let rect = currentScreenRect()
         engine.home = Physics.clampHome(engine.home, in: rect)
         engine.pos = Physics.clampHome(engine.pos, in: rect)
+    }
+
+    // MARK: - Per-screen position memory (§3)
+
+    static func screenID(for screen: NSScreen) -> String {
+        if let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+           let uuidRef = CGDisplayCreateUUIDFromDisplayID(number.uint32Value) {
+            let uuid = uuidRef.takeRetainedValue()
+            return CFUUIDCreateString(nil, uuid) as String
+        }
+        return screen.localizedName
+    }
+
+    private var lastSavedHome = Vec2(-1e9, -1e9)
+    private var lastPositionSaveT = -1e9
+
+    /// Called each frame; persists the resting position for the current screen,
+    /// throttled and only when the pal is actually at rest.
+    func rememberPositionIfSettled(tMs: Double) {
+        guard !engine.dragging, !engine.freeFlight,
+              hypot(engine.vel.x, engine.vel.y) < 5,
+              tMs - lastPositionSaveT > 5000 else { return }
+        let home = engine.home
+        guard hypot(home.x - lastSavedHome.x, home.y - lastSavedHome.y) > 1 else { return }
+        let p = NSPoint(x: home.x, y: home.y)
+        guard let screen = NSScreen.screens.first(where: { NSPointInRect(p, $0.frame) }) else {
+            return
+        }
+        lastSavedHome = home
+        lastPositionSaveT = tMs
+        let id = Self.screenID(for: screen)
+        settingsStore.update {
+            var map = $0.lastPositionPerScreen ?? [:]
+            map[id] = [home.x, home.y]
+            $0.lastPositionPerScreen = map
+        }
     }
 
     // MARK: - Character switching

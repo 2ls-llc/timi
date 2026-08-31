@@ -21,12 +21,29 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         super.init()
 
         let menu = NSMenu()
+        menu.autoenablesItems = false  // manual isEnabled control below
         menu.delegate = self
         statusItem.menu = menu
         refresh()
+    }
 
-        clockTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.refreshTitle()
+    /// The 1 Hz title timer exists only while a clock is actually displayed
+    /// (running/paused + setting on); .common mode keeps it updating while the
+    /// menu is open, and the tolerance lets the system coalesce wakeups.
+    private func updateClockTimer() {
+        let mode = controller.timer.mode
+        let wanted = settingsStore.settings.showMenuBarClock &&
+            (mode == .running || mode == .paused)
+        if wanted && clockTimer == nil {
+            let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+                self?.refreshTitle()
+            }
+            t.tolerance = 0.2
+            RunLoop.main.add(t, forMode: .common)
+            clockTimer = t
+        } else if !wanted, let t = clockTimer {
+            t.invalidate()
+            clockTimer = nil
         }
     }
 
@@ -35,6 +52,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     func refresh() {
         refreshIcon()
         refreshTitle()
+        updateClockTimer()
     }
 
     private func refreshIcon() {

@@ -50,9 +50,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.currentSessionIndex = nil
             }
             self.statusBar.refresh()
+            self.settingsWindow.bumpStats()
         }
         controller.onModeChanged = { [weak self] in self?.statusBar.refresh() }
-        controller.onHeartLanded = { [weak self] in self?.statusBar.refresh() }
+        controller.onHeartLanded = { [weak self] in
+            self?.statusBar.refresh()
+            self?.settingsWindow.bumpStats()
+        }
+        sessions.onReset = { [weak self] in
+            // "Reset hearts…" mid-session: the in-flight record is gone; don't
+            // let its finish write through a stale index.
+            self?.currentSessionIndex = nil
+        }
 
         controller.startRunning()
         debugHarness = DebugHarness(controller: controller)
@@ -130,7 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Headless smoke test: build and lay out the settings form without showing
     /// a window or stealing focus (the debug harness runs on a live machine).
     func showSettingsForDebug() {
-        let view = SettingsView(controller: controller, sessions: sessions, onChanged: {})
+        let view = SettingsView(controller: controller, sessions: sessions,
+                                onChanged: {}, ticker: SettingsStatsTicker())
         let hosting = NSHostingController(rootView: view)
         hosting.view.frame = NSRect(x: 0, y: 0, width: 420, height: 560)
         hosting.view.layoutSubtreeIfNeeded()

@@ -114,6 +114,23 @@ final class ControlsStrip: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
+    /// The prototype hides the strip with `pointerEvents: "none"` alongside the
+    /// opacity fade — an invisible strip must never swallow clicks. Also restrict
+    /// hits to the actual chip row, not the panel-wide layout band.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard alphaValue > 0.01 else { return nil }
+        let local = convert(point, from: superview)
+        guard stack.frame.insetBy(dx: -4, dy: -4).contains(local) else { return nil }
+        return super.hitTest(point)
+    }
+
+    /// The chip row's rect in the superview's (panel) coordinates — the hover
+    /// target, tighter than the full-width layout frame.
+    var chipRowFrameInPanel: NSRect {
+        stack.frame.offsetBy(dx: frame.origin.x, dy: frame.origin.y)
+            .insetBy(dx: -4, dy: -4)
+    }
+
     private var mode: TimerMode { controller?.timer.mode ?? .idle }
 
     func modeChanged() { rebuild() }

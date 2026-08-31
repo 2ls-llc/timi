@@ -2,11 +2,18 @@ import SwiftUI
 import KeyboardShortcuts
 import PixelPalKit
 
+/// Bumped from outside (session completes, hearts land) so an open Settings
+/// window's stats stay live.
+final class SettingsStatsTicker: ObservableObject {
+    @Published var generation = 0
+}
+
 /// The one SwiftUI surface in the app (§2: AppKit everywhere else).
 struct SettingsView: View {
     unowned let controller: PalController
     let sessions: SessionStore
     var onChanged: () -> Void
+    @ObservedObject var ticker: SettingsStatsTicker
 
     @State private var revision = 0
     @State private var confirmResetHearts = false
@@ -117,6 +124,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private unowned let controller: PalController
     private let sessions: SessionStore
     private let onChanged: () -> Void
+    private let ticker = SettingsStatsTicker()
 
     init(controller: PalController, sessions: SessionStore, onChanged: @escaping () -> Void) {
         self.controller = controller
@@ -124,10 +132,15 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         self.onChanged = onChanged
     }
 
+    /// Re-render the stats section of an open window (session completed, etc.).
+    func bumpStats() {
+        ticker.generation += 1
+    }
+
     func show() {
         if window == nil {
             let view = SettingsView(controller: controller, sessions: sessions,
-                                    onChanged: onChanged)
+                                    onChanged: onChanged, ticker: ticker)
             let hosting = NSHostingController(rootView: view)
             let w = NSWindow(contentViewController: hosting)
             w.title = "Pixel Pal Settings"

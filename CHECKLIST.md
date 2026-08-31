@@ -22,7 +22,7 @@ File references: P = pip-timer-v4-3.jsx, M = mochi-timer.jsx.
 
 ## §3 Floating window
 - [x] 3.1 NSPanel borderless/nonactivating, clear, no shadow, .floating, hidesOnDeactivate=false, canJoinAllSpaces+fullScreenAuxiliary+ignoresCycle
-- [x] 3.2 Panel 340×300 = creature + ≥60pt click-through margins + strip room
+- [x] 3.2 Panel 340×300 = creature + click-through margins (86pt sides, 98pt bottom, 58pt top) + strip room
 - [x] 3.3 Click-through default; cursor-over-creature/strip enables input (display-link cadence ≥12 Hz, 60 Hz when near); hold-⌥ mode; always mode
 - [x] 3.4 Position driven by physics via setFrameOrigin; drag feeds cursor into 380/26 spring (T,L)
 - [x] 3.5 Wall bounds = visibleFrame of current screen; didChangeScreenParameters clamps home (L)

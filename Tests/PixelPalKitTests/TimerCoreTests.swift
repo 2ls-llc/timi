@@ -213,6 +213,25 @@ final class TimerCoreTests: XCTestCase {
         XCTAssertEqual(d!.timeIntervalSince(t0), 150.0, accuracy: 1e-9)
     }
 
+    // MARK: - Duration clamps (§5.2 / §3.8)
+
+    func testDurationClamps() {
+        let core = TimerCore()
+        core.setDuration(ms: 30_000)  // the 30 s preset sits below the scroll floor
+        XCTAssertEqual(core.durationMs, 30_000)
+        XCTAssertTrue(core.nudgeDuration(byMinutes: 100))
+        XCTAssertEqual(core.durationMs, 90 * 60_000, "scroll cap at 90 min")
+        XCTAssertFalse(core.nudgeDuration(byMinutes: 1), "already at the cap")
+        XCTAssertTrue(core.nudgeDuration(byMinutes: -200))
+        XCTAssertEqual(core.durationMs, 60_000, "scroll floor at 1 min")
+        XCTAssertFalse(core.nudgeDuration(byMinutes: -1))
+        core.setDuration(ms: 200 * 60_000)
+        XCTAssertEqual(core.durationMs, 90 * 60_000, "setDuration caps too")
+        core.start(now: t0)
+        XCTAssertFalse(core.nudgeDuration(byMinutes: 1), "scroll only while idle")
+        XCTAssertEqual(core.durationMs, 90 * 60_000)
+    }
+
     func testTapCycle() {
         let core = TimerCore()
         XCTAssertEqual(core.tap(now: t0), .started)
