@@ -6,7 +6,7 @@
 # matching the `import TimiKit` statements in Sources/Timi.
 name: Timi
 options:
-  bundleIdPrefix: com.twols
+  bundleIdPrefix: com.2ls
   deploymentTarget:
     macOS: "14.0"
 packages:
@@ -21,7 +21,7 @@ targets:
       - path: ../Sources/TimiKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.twols.timikit
+        PRODUCT_BUNDLE_IDENTIFIER: com.2ls.timikit
   Timi:
     type: application
     platform: macOS
@@ -37,7 +37,7 @@ targets:
       path: Timi.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.twols.timi
+        PRODUCT_BUNDLE_IDENTIFIER: com.2ls.timi
         ENABLE_HARDENED_RUNTIME: YES
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1

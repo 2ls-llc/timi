@@ -42,20 +42,20 @@ On the desktop:
 ## Install
 
 ```sh
-brew install twols/tap/timi
+brew install 2ls/tap/timi
 ```
 
-(The tap repo is `twols/homebrew-tap`.) Until releases are signed and
+(The tap repo is `2ls/homebrew-tap`.) Until releases are signed and
 notarized, macOS quarantine will block the app; install with:
 
 ```sh
-brew install --no-quarantine twols/tap/timi
+brew install --no-quarantine 2ls/tap/timi
 ```
 
 Or build from source:
 
 ```sh
-git clone https://github.com/twols/timi && cd timi
+git clone https://github.com/2ls/timi && cd timi
 ./Packaging/build.sh          # → dist/Timi.app (universal, sandboxed, ad-hoc signed)
 ```
 
@@ -150,7 +150,7 @@ VERSION=0.1.0 ./Packaging/release.sh    # zip + sha256 for the cask
 Tagging `v*` runs `.github/workflows/release.yml`: tests → universal build →
 sign + notarize when secrets exist (otherwise an ad-hoc build with a note in
 the release) → GitHub Release → PR bumping `Casks/timi.rb` in
-`twols/homebrew-tap`.
+`2ls/homebrew-tap`.
 
 ## Credits
 

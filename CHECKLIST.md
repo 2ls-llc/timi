@@ -109,9 +109,9 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 10.7 Multi-display clamps, display sleep, screen lock, termination save, Spaces (canJoinAllSpaces)
 
 ## §11 Packaging (M7)
-- [x] 11.1 Bundle id com.twols.timi; Timi.app; cask token timi (never "pip")
+- [x] 11.1 Bundle id com.2ls.timi; Timi.app; cask token timi (never "pip")
 - [x] 11.2 build.sh (universal, verified: x86_64+arm64, sandbox entitlement, launches) / notarize.sh / release.sh (zip+sha256 verified)
-- [x] 11.3 Homebrew cask per spec + README brew instructions (tap: twols/homebrew-tap)
+- [x] 11.3 Homebrew cask per spec + README brew instructions (tap: 2ls/homebrew-tap)
 - [x] 11.4 release.yml: tests → build → sign+notarize if secrets else ad-hoc with release note → Release → tap bump PR
 - [x] 11.5 Ad-hoc signed sandboxed build verified running; --no-quarantine documented in README + release notes
 
