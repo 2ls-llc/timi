@@ -1,0 +1,31 @@
+# xcodegen spec — for anyone who wants an Xcode project for signing/debugging:
+#   brew install xcodegen && xcodegen generate --spec Packaging/project.yml
+# The canonical build stays `swift build` / Packaging/build.sh.
+name: PixelPal
+options:
+  bundleIdPrefix: com.msull92
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 2.0.0
+targets:
+  PixelPal:
+    type: application
+    platform: macOS
+    sources:
+      - path: ../Sources/PixelPal
+      - path: ../Sources/PixelPalKit
+    dependencies:
+      - package: KeyboardShortcuts
+    info:
+      path: Info.plist
+    entitlements:
+      path: PixelPal.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.pixelpal
+        ENABLE_HARDENED_RUNTIME: YES
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1

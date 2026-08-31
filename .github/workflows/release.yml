@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || true
+
+      - name: Derive version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: swift test
+
+      - name: Import signing certificate
+        id: signing
+        env:
+          DEVELOPER_ID_CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+        run: |
+          if [ -z "$DEVELOPER_ID_CERT_P12" ]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "No signing secrets — will produce an ad-hoc build."
+            exit 0
+          fi
+          KEYCHAIN=build.keychain
+          security create-keychain -p ci "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          echo "$DEVELOPER_ID_CERT_P12" | base64 --decode > cert.p12
+          security import cert.p12 -k "$KEYCHAIN" -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign
+          rm cert.p12
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KEYCHAIN"
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | awk -F'"' '/Developer ID Application/{print $2; exit}')
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+
+      - name: Build universal app
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CODESIGN_IDENTITY: ${{ steps.signing.outputs.identity || '-' }}
+        run: ./Packaging/build.sh
+
+      - name: Notarize
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: ./Packaging/notarize.sh
+
+      - name: Package zip
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./Packaging/release.sh
+          echo "sha256=$(cat dist/PixelPal-$VERSION.zip.sha256)" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SIGNED: ${{ steps.signing.outputs.signed }}
+        run: |
+          if [ "$SIGNED" = "true" ]; then
+            NOTES="Signed and notarized build."
+          else
+            NOTES="⚠️ Unsigned (ad-hoc) build — no signing secrets were configured. \
+          Install with \`brew install --no-quarantine msull92/tap/pixel-pal\` or clear \
+          quarantine manually: \`xattr -dr com.apple.quarantine /Applications/PixelPal.app\`."
+          fi
+          gh release create "v$VERSION" \
+            "dist/PixelPal-$VERSION.zip" \
+            --title "Pixel Pal $VERSION" \
+            --notes "$NOTES
+          sha256: ${{ steps.package.outputs.sha256 }}"
+
+      - name: Open tap bump PR
+        if: ${{ env.TAP_TOKEN != '' }}
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          git clone "https://x-access-token:$TAP_TOKEN@github.com/msull92/homebrew-tap.git" tap
+          cd tap
+          mkdir -p Casks
+          sed -e "s/^  version .*/  version \"$VERSION\"/" \
+              -e "s/^  sha256 .*/  sha256 \"$SHA256\"/" \
+              ../Packaging/homebrew/Casks/pixel-pal.rb > Casks/pixel-pal.rb
+          BRANCH="pixel-pal-$VERSION"
+          git checkout -b "$BRANCH"
+          git add Casks/pixel-pal.rb
+          git -c user.name=pixel-pal-bot -c user.email=bot@msull92.com \
+            commit -m "pixel-pal $VERSION"
+          git push origin "$BRANCH"
+          GH_TOKEN=$TAP_TOKEN gh pr create --repo msull92/homebrew-tap \
+            --head "$BRANCH" --title "pixel-pal $VERSION" \
+            --body "Automated bump from the pixel-pal release workflow."

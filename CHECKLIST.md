@@ -102,11 +102,11 @@ File references: P = pip-timer-v4-3.jsx, M = mochi-timer.jsx.
 - [x] 10.7 Multi-display clamps, display sleep, screen lock, termination save, Spaces (canJoinAllSpaces)
 
 ## §11 Packaging (M7)
-- [ ] 11.1 Bundle id com.msull92.pixelpal; PixelPal.app; cask token pixel-pal
-- [ ] 11.2 build.sh / notarize.sh / release.sh
-- [ ] 11.3 Homebrew cask + README instructions
-- [ ] 11.4 GitHub Actions release.yml (sign if secrets, else unsigned note; tap bump PR)
-- [ ] 11.5 Ad-hoc signed local build; --no-quarantine documented
+- [x] 11.1 Bundle id com.msull92.pixelpal; PixelPal.app; cask token pixel-pal (never "pip")
+- [x] 11.2 build.sh (universal, verified: x86_64+arm64, sandbox entitlement, launches) / notarize.sh / release.sh (zip+sha256 verified)
+- [x] 11.3 Homebrew cask per spec + README brew instructions (tap: msull92/homebrew-tap)
+- [x] 11.4 release.yml: tests → build → sign+notarize if secrets else ad-hoc with release note → Release → tap bump PR
+- [x] 11.5 Ad-hoc signed sandboxed build verified running; --no-quarantine documented in README + release notes
 
 ## §12 Quality bar
 - [x] 12.1 CPU measured (see 1.4) — numbers in README
@@ -119,10 +119,10 @@ File references: P = pip-timer-v4-3.jsx, M = mochi-timer.jsx.
 ## §13 Process
 - [x] 13.1 PLAN.md from full prototype read
 - [x] 13.2 Checklist maintained
-- [ ] 13.3 Milestone commits M1–M7 (M1–M6 done)
+- [x] 13.3 Milestone commits M1–M7
 - [x] 13.4 Build+test+launch+snapshot evidence per milestone
 - [x] 13.5 No extra features; no simplified behaviors (adversarial review confirmed; 4 fixes applied)
-- [ ] 13.6 clone && ./Packaging/build.sh → PixelPal.app; swift test green; README complete
+- [x] 13.6 clone && ./Packaging/build.sh → PixelPal.app (verified end-to-end incl. launch); swift test green (89); README complete
 
 ### Not machine-verifiable in this environment (honest notes)
 - Real-desktop screenshots blocked by Screen Recording TCC; layer-tree self-captures
