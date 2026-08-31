@@ -1,0 +1,128 @@
+import AppKit
+import PixelPalKit
+
+/// Geometry shared by the panel and its layers. The creature's world position
+/// (`PalEngine.pos`) maps to `creatureCenter` in panel coordinates.
+enum PanelGeometry {
+    static let size = NSSize(width: 340, height: 300)
+    /// Creature center offset from the panel's bottom-left.
+    static let creatureCenter = NSPoint(x: 170, y: 170)
+    /// The 56×48 canvas at 3 pt per logical pixel.
+    static let canvasSize = NSSize(width: 168, height: 144)
+    static let glowSize = NSSize(width: 260, height: 230)
+    /// Creature hit rect (the prototype's canvas hover area), panel coords.
+    static var creatureRect: NSRect {
+        NSRect(x: creatureCenter.x - canvasSize.width / 2,
+               y: creatureCenter.y - canvasSize.height / 2,
+               width: canvasSize.width, height: canvasSize.height)
+    }
+    /// Controls strip: top edge 84 pt below the creature center (prototype `top: 84`).
+    static let stripHeight: CGFloat = 26
+    static var stripRect: NSRect {
+        NSRect(x: 0, y: creatureCenter.y - 84 - stripHeight,
+               width: size.width, height: stripHeight)
+    }
+
+    static func panelOrigin(forCreatureAt pos: Vec2) -> NSPoint {
+        NSPoint(x: pos.x - creatureCenter.x, y: pos.y - creatureCenter.y)
+    }
+}
+
+/// The floating, non-activating, click-through panel the pal lives in.
+final class PalPanel: NSPanel {
+    init() {
+        super.init(contentRect: NSRect(origin: .zero, size: PanelGeometry.size),
+                   styleMask: [.borderless, .nonactivatingPanel],
+                   backing: .buffered, defer: false)
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = false
+        level = .floating
+        hidesOnDeactivate = false
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        ignoresMouseEvents = true
+        isMovableByWindowBackground = false
+        isFloatingPanel = true
+        becomesKeyOnlyIfNeeded = true
+        animationBehavior = .none
+        isReleasedWhenClosed = false
+    }
+
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+}
+
+protocol PalViewDelegate: AnyObject {
+    func palViewMouseDown(at screenPoint: NSPoint)
+    func palViewMouseDragged(to screenPoint: NSPoint)
+    func palViewMouseUp()
+    func palViewScrolled(deltaY: CGFloat, precise: Bool)
+}
+
+/// Content view: hosts the glow + canvas layers and forwards mouse input.
+final class PalView: NSView {
+    weak var delegate: PalViewDelegate?
+
+    let glowLayer = CALayer()
+    let cabinetLayer = CALayer()
+    let canvasLayer = CALayer()
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layerContentsRedrawPolicy = .never
+
+        let noAnimations: [String: CAAction] = [
+            "contents": NSNull(), "transform": NSNull(), "opacity": NSNull(),
+            "position": NSNull(), "bounds": NSNull(), "hidden": NSNull(),
+        ]
+
+        glowLayer.frame = NSRect(
+            x: PanelGeometry.creatureCenter.x - PanelGeometry.glowSize.width / 2,
+            y: PanelGeometry.creatureCenter.y - PanelGeometry.glowSize.height / 2,
+            width: PanelGeometry.glowSize.width, height: PanelGeometry.glowSize.height)
+        glowLayer.actions = noAnimations
+        layer?.addSublayer(glowLayer)
+
+        cabinetLayer.frame = PanelGeometry.creatureRect.insetBy(dx: -16, dy: -16)
+        cabinetLayer.actions = noAnimations
+        cabinetLayer.isHidden = true
+        layer?.addSublayer(cabinetLayer)
+
+        canvasLayer.frame = PanelGeometry.creatureRect
+        canvasLayer.magnificationFilter = .nearest
+        canvasLayer.minificationFilter = .nearest
+        canvasLayer.contentsGravity = .resize
+        canvasLayer.actions = noAnimations
+        layer?.addSublayer(canvasLayer)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var isFlipped: Bool { false }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    private func screenPoint(for event: NSEvent) -> NSPoint {
+        guard let window else { return .zero }
+        let p = event.locationInWindow
+        return NSPoint(x: window.frame.origin.x + p.x, y: window.frame.origin.y + p.y)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        delegate?.palViewMouseDown(at: screenPoint(for: event))
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        delegate?.palViewMouseDragged(to: screenPoint(for: event))
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        delegate?.palViewMouseUp()
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        delegate?.palViewScrolled(deltaY: event.scrollingDeltaY,
+                                  precise: event.hasPreciseScrollingDeltas)
+    }
+}
