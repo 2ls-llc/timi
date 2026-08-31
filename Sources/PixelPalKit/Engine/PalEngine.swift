@@ -668,10 +668,12 @@ public final class PalEngine {
                        screen.minX + Physics.homeMargin, screen.maxX - Physics.homeMargin)
     }
 
-    /// True while anything demands 60 fps (see the cadence policy in §4 of the spec).
+    /// True while anything demands 60 fps (see the cadence policy in §4 of the
+    /// spec). Zs are deliberately excluded — they only exist while sleeping, and
+    /// the 12 fps sleep tier takes precedence (they drift fine at 12 fps).
     public var wantsHighCadence: Bool {
         dragging || freeFlight || hopY != 0 || mode == .done || flags.panic ||
-        !conf.isEmpty || !zs.isEmpty || !sweats.isEmpty || !miniHearts.isEmpty ||
+        !conf.isEmpty || !sweats.isEmpty || !miniHearts.isEmpty ||
         flyHeart != nil
     }
 }

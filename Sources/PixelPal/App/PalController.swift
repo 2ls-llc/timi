@@ -71,6 +71,9 @@ final class PalController: NSObject, PalViewDelegate {
         palView.addSubview(strip)
         controlsStrip = strip
 
+        palView.onAccessibilityPress = { [weak self] in self?.tapAction() }
+        refreshAccessibility()
+
         updateGlowImage()
         panel.setFrameOrigin(PanelGeometry.panelOrigin(forCreatureAt: engine.pos))
     }
@@ -138,19 +141,76 @@ final class PalController: NSObject, PalViewDelegate {
 
         controlsStrip?.updateVisibility(hovered: hovered, mode: timer.mode, tMs: tMs)
         updateCadence(hovered: hovered, cursor: cursor, tMs: tMs)
+
+        // VoiceOver value: refresh when the displayed second changes.
+        let axSecond = Int(input.remainingMs / 1000)
+        if axSecond != lastAxSecond || timer.mode != lastAxMode {
+            lastAxSecond = axSecond
+            lastAxMode = timer.mode
+            refreshAccessibility()
+        }
     }
 
+    private var lastAxSecond = -1
+    private var lastAxMode: TimerMode = .idle
+
+    private func refreshAccessibility() {
+        palView.axLabel = "\(engine.config.name) — pixel pal timer"
+        let now = Date()
+        switch timer.mode {
+        case .idle:
+            palView.axValue = "idle, \(formatMillis(timer.durationMs)) set"
+        case .running:
+            palView.axValue = "running, \(formatMillis(timer.remainingMs(now: now))) remaining"
+        case .paused:
+            palView.axValue = "paused, \(formatMillis(timer.remainingMs(now: now))) remaining"
+        case .done:
+            palView.axValue = "finished"
+        }
+    }
+
+    private var lastCanvasBuffer: [UInt8] = []
+    private var lastScaleX = CGFloat.nan
+    private var lastScaleY = CGFloat.nan
+    private var lastCanvasOpacity = Float.nan
+    private var lastGlowOpacity = Float.nan
+
     private func applyToLayers() {
+        let f = engine.flags
+        // Only touch Core Animation when something actually changed — at rest a
+        // frame is often byte-identical (memcmp of 10.5 KB is ~free) and skipping
+        // the commit skips the render-server round trip entirely.
+        let canvasChanged = canvas.buffer != lastCanvasBuffer
+        let sx = CGFloat(f.sxc * engine.scale)
+        let sy = CGFloat(f.syc * engine.scale)
+        let canvasOp = Float(f.canvasOpacity)
+        let glowOp = Float(f.glowOpacity)
+        let transformChanged = abs(sx - lastScaleX) > 0.0005 || abs(sy - lastScaleY) > 0.0005
+        // 0.01 opacity steps are invisible on the soft glow but skip ~2/3 of
+        // otherwise-idle render-server commits.
+        let opacityChanged = abs(canvasOp - lastCanvasOpacity) > 0.01 ||
+            abs(glowOp - lastGlowOpacity) > 0.01
+        guard canvasChanged || transformChanged || opacityChanged else { return }
+
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        if let img = CanvasImage.make(from: canvas) {
-            palView.canvasLayer.contents = img
+        if canvasChanged {
+            lastCanvasBuffer = canvas.buffer
+            if let img = CanvasImage.make(from: canvas) {
+                palView.canvasLayer.contents = img
+            }
         }
-        let f = engine.flags
-        palView.canvasLayer.transform = CATransform3DMakeScale(
-            CGFloat(f.sxc * engine.scale), CGFloat(f.syc * engine.scale), 1)
-        palView.canvasLayer.opacity = Float(f.canvasOpacity)
-        palView.glowLayer.opacity = Float(f.glowOpacity)
+        if transformChanged {
+            lastScaleX = sx
+            lastScaleY = sy
+            palView.canvasLayer.transform = CATransform3DMakeScale(sx, sy, 1)
+        }
+        if opacityChanged {
+            lastCanvasOpacity = canvasOp
+            lastGlowOpacity = glowOp
+            palView.canvasLayer.opacity = canvasOp
+            palView.glowLayer.opacity = glowOp
+        }
         CATransaction.commit()
     }
 

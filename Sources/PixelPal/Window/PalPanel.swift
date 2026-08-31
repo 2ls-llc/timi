@@ -60,8 +60,22 @@ protocol PalViewDelegate: AnyObject {
 }
 
 /// Content view: hosts the glow + canvas layers and forwards mouse input.
+/// Exposed to VoiceOver as a button whose value reads the timer state.
 final class PalView: NSView {
     weak var delegate: PalViewDelegate?
+    /// Set by the controller: ("Pip — pixel pal timer", "running, 12:34 remaining").
+    var axLabel: String = "Pixel pal timer"
+    var axValue: String = ""
+    var onAccessibilityPress: (() -> Void)?
+
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .button }
+    override func accessibilityLabel() -> String? { axLabel }
+    override func accessibilityValue() -> Any? { axValue }
+    override func accessibilityPerformPress() -> Bool {
+        onAccessibilityPress?()
+        return true
+    }
 
     let glowLayer = CALayer()
     let cabinetLayer = CALayer()

@@ -13,9 +13,11 @@ public let TAU = Double.pi * 2
 }
 
 /// `fmt(ms)` from the prototype: ceil to seconds, "m:ss".
+/// Hand-rolled (no String(format:)) — this runs on the render path.
 public func formatMillis(_ ms: Double) -> String {
     let t = Int(max(0, (ms / 1000).rounded(.up)))
-    return "\(t / 60):" + String(format: "%02d", t % 60)
+    let s = t % 60
+    return "\(t / 60):\(s < 10 ? "0" : "")\(s)"
 }
 
 public struct Vec2: Equatable, Sendable {

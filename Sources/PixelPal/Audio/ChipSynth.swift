@@ -42,8 +42,12 @@ final class ChipSynth: SoundSink {
 
     func play(_ sound: PalSound) {
         if muted { return }
+        // A silent tick (volume ≤ 0.01) produces no voices — don't touch the
+        // engine or the idle clock for it, or the engine never pauses in flow.
+        let voices = SoundRecipes.voices(for: sound)
+        guard !voices.isEmpty else { return }
         lock.lock()
-        dsp.schedule(sound)
+        for v in voices { dsp.scheduleVoice(v) }
         lock.unlock()
         lastPlay = Date()
         if !engine.isRunning {
