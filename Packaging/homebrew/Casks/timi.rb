@@ -2,10 +2,10 @@ cask "timi" do
   version "0.1.0"
   sha256 "REPLACE"
 
-  url "https://github.com/msull92/timi/releases/download/v#{version}/Timi-#{version}.zip"
+  url "https://github.com/twols/timi/releases/download/v#{version}/Timi-#{version}.zip"
   name "Timi"
   desc "Pixel cat that lives on your desktop and keeps your focus timer"
-  homepage "https://github.com/msull92/timi"
+  homepage "https://github.com/twols/timi"
 
   depends_on macos: ">= :sonoma"
 
@@ -17,8 +17,8 @@ cask "timi" do
   app "Timi.app"
 
   zap trash: [
-    "~/Library/Preferences/com.msull92.timi.plist",
+    "~/Library/Preferences/com.twols.timi.plist",
     "~/Library/Application Support/Timi",
-    "~/Library/Containers/com.msull92.timi",
+    "~/Library/Containers/com.twols.timi",
   ]
 end

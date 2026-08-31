@@ -80,7 +80,7 @@ jobs:
             NOTES="Signed and notarized build."
           else
             NOTES="⚠️ Unsigned (ad-hoc) build — no signing secrets were configured. \
-          Install with \`brew install --no-quarantine msull92/tap/timi\` or clear \
+          Install with \`brew install --no-quarantine twols/tap/timi\` or clear \
           quarantine manually: \`xattr -dr com.apple.quarantine /Applications/Timi.app\`."
           fi
           gh release create "v$VERSION" \
@@ -96,7 +96,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           SHA256: ${{ steps.package.outputs.sha256 }}
         run: |
-          git clone "https://x-access-token:$TAP_TOKEN@github.com/msull92/homebrew-tap.git" tap
+          git clone "https://x-access-token:$TAP_TOKEN@github.com/twols/homebrew-tap.git" tap
           cd tap
           mkdir -p Casks
           sed -e "s/^  version .*/  version \"$VERSION\"/" \
@@ -105,9 +105,9 @@ jobs:
           BRANCH="timi-$VERSION"
           git checkout -b "$BRANCH"
           git add Casks/timi.rb
-          git -c user.name=timi-bot -c user.email=bot@msull92.com \
+          git -c user.name=timi-bot -c user.email=bot@twols.com \
             commit -m "timi $VERSION"
           git push origin "$BRANCH"
-          GH_TOKEN=$TAP_TOKEN gh pr create --repo msull92/homebrew-tap \
+          GH_TOKEN=$TAP_TOKEN gh pr create --repo twols/homebrew-tap \
             --head "$BRANCH" --title "timi $VERSION" \
             --body "Automated bump from the timi release workflow."

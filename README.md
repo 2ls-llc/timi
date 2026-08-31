@@ -42,20 +42,20 @@ On the desktop:
 ## Install
 
 ```sh
-brew install msull92/tap/timi
+brew install twols/tap/timi
 ```
 
-(The tap repo is `msull92/homebrew-tap`.) Until releases are signed and
+(The tap repo is `twols/homebrew-tap`.) Until releases are signed and
 notarized, macOS quarantine will block the app; install with:
 
 ```sh
-brew install --no-quarantine msull92/tap/timi
+brew install --no-quarantine twols/tap/timi
 ```
 
 Or build from source:
 
 ```sh
-git clone https://github.com/msull92/timi && cd timi
+git clone https://github.com/twols/timi && cd timi
 ./Packaging/build.sh          # → dist/Timi.app (universal, sandboxed, ad-hoc signed)
 ```
 
@@ -150,10 +150,12 @@ VERSION=0.1.0 ./Packaging/release.sh    # zip + sha256 for the cask
 Tagging `v*` runs `.github/workflows/release.yml`: tests → universal build →
 sign + notarize when secrets exist (otherwise an ad-hoc build with a note in
 the release) → GitHub Release → PR bumping `Casks/timi.rb` in
-`msull92/homebrew-tap`.
+`twols/homebrew-tap`.
 
 ## Credits
 
 Timi was designed as a web prototype (included under `Prototype/`, where she
 went by a working name). The native port keeps her soul intact: every constant,
 every fidget probability, every one of her tail-physics ease rates.
+
+© Two Ls LLC

@@ -97,6 +97,9 @@ struct SettingsView: View {
                 Text("A tiny pixel cat that lives on your desktop and keeps your focus timer. Timi was born as a web prototype; this is her native home.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Text("© Two Ls LLC")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

@@ -3,7 +3,7 @@
 > **Rename & rescope (post-M7):** the product is **Timi** — the cat, who is also the
 > app. The app was built under the working title "Pixel Pal" with a second character
 > ("Pip", a mint blob); per the owner's direction both were removed: the app, bundle
-> (com.msull92.timi), cask (`timi`), modules (Timi/TimiKit) and the cat herself are
+> (com.twols.timi), cask (`timi`), modules (Timi/TimiKit) and the cat herself are
 > all named Timi, and Pip's character code, sounds, prototype file, and the character-
 > switching UI are gone. Timi's own behavior is unchanged — the refactor was gated on
 > her golden snapshots matching byte-for-byte. Sections below describe the original
