@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         controller = PalController()
+        controller.sound = ChipSynth()
         controller.startRunning()
         debugHarness = DebugHarness(controller: controller)
 
