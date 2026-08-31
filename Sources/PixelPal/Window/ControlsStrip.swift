@@ -91,7 +91,9 @@ final class ChipButton: NSButton {
 /// pause/resume + mute + reset while running/paused. Fades over 300 ms; pinned
 /// visible while paused.
 final class ControlsStrip: NSView {
-    weak var controller: PalController?
+    weak var controller: PalController? {
+        didSet { rebuild() }
+    }
 
     private let stack = NSStackView()
     private var visible = false

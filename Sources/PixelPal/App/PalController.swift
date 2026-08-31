@@ -42,6 +42,9 @@ final class PalController: NSObject, PalViewDelegate {
     private var glowImages: [CharacterID: CGImage] = [:]
     private(set) var controlsStrip: ControlsStrip?
 
+    /// DebugHarness only: force the hovered flag for scripted verification.
+    var debugHoverOverride: Bool?
+
     private var nowMs: Double { CACurrentMediaTime() * 1000 }
     private var reduceMotion: Bool {
         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -149,6 +152,7 @@ final class PalController: NSObject, PalViewDelegate {
     }
 
     private func computeHovered(cursor: NSPoint) -> Bool {
+        if let forced = debugHoverOverride { return forced }
         let p = panelPoint(from: cursor)
         if PanelGeometry.creatureRect.contains(p) { return true }
         if let strip = controlsStrip, !strip.isHidden, strip.alphaValue > 0.01,

@@ -90,6 +90,22 @@ final class DebugHarness {
                 controller.engine.vel = Vec2(vx, vy)
                 controller.engine.freeFlight = true
             }
+        case "pdown":
+            if parts.count > 2, let x = Double(parts[1]), let y = Double(parts[2]) {
+                controller.engine.pointerDown(at: Vec2(x, y), tMs: nowMs)
+            }
+        case "pdrag":
+            if parts.count > 2, let x = Double(parts[1]), let y = Double(parts[2]) {
+                controller.engine.pointerDragged(to: Vec2(x, y), tMs: nowMs)
+            }
+        case "pup":
+            controller.palViewMouseUp()
+        case "hover":
+            controller.debugHoverOverride = parts.count > 1 ? (parts[1] == "on") : nil
+        case "scroll":
+            if parts.count > 1, let dy = Double(parts[1]) {
+                controller.palViewScrolled(deltaY: dy, precise: false)
+            }
         case "state":
             let e = controller.engine
             let info = "mode=\(controller.timer.mode.rawValue) pos=\(Int(e.pos.x)),\(Int(e.pos.y)) " +
