@@ -2,32 +2,32 @@
 import PackageDescription
 
 let package = Package(
-    name: "PixelPal",
+    name: "Timi",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "PixelPal", targets: ["PixelPal"]),
-        .library(name: "PixelPalKit", targets: ["PixelPalKit"]),
+        .executable(name: "Timi", targets: ["Timi"]),
+        .library(name: "TimiKit", targets: ["TimiKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.0.0"),
     ],
     targets: [
         .target(
-            name: "PixelPalKit",
-            path: "Sources/PixelPalKit"
+            name: "TimiKit",
+            path: "Sources/TimiKit"
         ),
         .executableTarget(
-            name: "PixelPal",
+            name: "Timi",
             dependencies: [
-                "PixelPalKit",
+                "TimiKit",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
-            path: "Sources/PixelPal"
+            path: "Sources/Timi"
         ),
         .testTarget(
-            name: "PixelPalKitTests",
-            dependencies: ["PixelPalKit"],
-            path: "Tests/PixelPalKitTests"
+            name: "TimiKitTests",
+            dependencies: ["TimiKit"],
+            path: "Tests/TimiKitTests"
         ),
     ]
 )

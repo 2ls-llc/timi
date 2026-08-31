@@ -1,5 +1,5 @@
 #!/bin/bash
-# Signs dist/PixelPal.app with a Developer ID certificate, notarizes it with
+# Signs dist/Timi.app with a Developer ID certificate, notarizes it with
 # notarytool, and staples the ticket. Run build.sh first with
 # CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)".
 #
@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP=dist/PixelPal.app
+APP=dist/Timi.app
 test -d "$APP" || { echo "run Packaging/build.sh first"; exit 1; }
 : "${APPLE_ID:?set APPLE_ID}"
 : "${APPLE_TEAM_ID:?set APPLE_TEAM_ID}"
@@ -21,13 +21,13 @@ test -d "$APP" || { echo "run Packaging/build.sh first"; exit 1; }
 if [ -n "${CODESIGN_IDENTITY:-}" ]; then
   echo "==> re-signing with $CODESIGN_IDENTITY"
   codesign --force --options runtime \
-    --entitlements Packaging/PixelPal.entitlements \
+    --entitlements Packaging/Timi.entitlements \
     --sign "$CODESIGN_IDENTITY" "$APP"
 fi
 
 codesign --verify --deep --strict "$APP"
 
-ZIP=dist/PixelPal-notarize.zip
+ZIP=dist/Timi-notarize.zip
 ditto -c -k --keepParent "$APP" "$ZIP"
 
 echo "==> notarytool submit (waits for Apple)"

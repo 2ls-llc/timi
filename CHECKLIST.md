@@ -1,9 +1,16 @@
-# Pixel Pal — Behavior Checklist
+# Timi — Behavior Checklist
+
+> **Rename & rescope (post-M7):** the app and the cat are both named **Timi**; the
+> second character ("Pip") and its prototype file were removed at the owner's
+> direction. Pip-specific line items below are struck through in spirit — they were
+> verified while they existed and their removal was gated on Timi's golden snapshots
+> staying byte-identical. "Mochi" was Timi's working name.
 
 Checked = implemented **and** verified. Verification key: (T)=unit test, (S)=golden
 snapshot test, (L)=live run with debug-harness evidence in Tests/snapshots/,
 (W)=confirmed by the 14-agent adversarial review workflow, (M)=measured.
-File references: P = pip-timer-v4-3.jsx, M = mochi-timer.jsx.
+File references: M = Prototype/mochi-timer.jsx (Timi's source of truth);
+P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 
 ## §1 Product principles
 - [x] 1.1 Every timer state expressed via body language/voice; numbers hidden most of the time (L,S)
@@ -83,9 +90,9 @@ File references: P = pip-timer-v4-3.jsx, M = mochi-timer.jsx.
 - [x] 7.9 Confetti (28,22), vx ±20, vy −30..−75, g 65, life 1.4–1.9, 5 colors, cull y≥47 (T,W)
 
 ## §8 Characters
-- [x] 8.1 Pip: palette/sprites/eyes/faces/ahoge/wake-"!"/sounds exact (S,W; live dumps)
-- [x] 8.2 Mochi: palette+glow tint 255,210,140; 5 variants + selection rules; ears 4 states; whiskers/nose/mouth; 4-segment tail chain (all targets + ease rates + tip + puff + sleep line); hunt (crouch/locked eyes/flat ears/wiggle 80 ms/pounce −50 + 260 pt/s/zoomies 0.9–3.2 s sine 135 ms/loaf); kneading; cat voice (S,W; live dumps)
-- [x] 8.3 Character switching preserves pos/home/hearts; timer unaffected (L)
+- [x] 8.1 ~~Pip~~ — removed at the owner's direction (was verified S,W while it existed)
+- [x] 8.2 Timi: palette+glow tint 255,210,140; 5 variants + selection rules; ears 4 states; whiskers/nose/mouth; 4-segment tail chain (all targets + ease rates + tip + puff + sleep line); hunt (crouch/locked eyes/flat ears/wiggle 80 ms/pounce −50 + 260 pt/s/zoomies 0.9–3.2 s sine 135 ms/loaf); kneading; cat voice (S,W; live dumps)
+- [x] 8.3 ~~Character switching~~ — removed with Pip; Timi is the only pal
 
 ## §9 Audio
 - [x] 9.1 AVAudioSourceNode synth; master 0.5 → LPF 7.5 kHz; default device; mute persisted; sq envelope 4 ms/60%/release; engine auto-pauses when silent (T,M)

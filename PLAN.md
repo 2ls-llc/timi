@@ -1,13 +1,23 @@
-# Pixel Pal — Implementation Plan
+# Timi — Implementation Plan
 
-A native macOS desktop app: a 1-bit pixel pet (Pip the mint blob, Mochi the amber cat) that
-lives above your windows and is a focus timer. Ported **exactly** from the two web prototypes
-(`Prototype/pip-timer-v4-3.jsx`, `Prototype/mochi-timer.jsx`), then exceeded in native polish.
+> **Rename & rescope (post-M7):** the product is **Timi** — the cat, who is also the
+> app. The app was built under the working title "Pixel Pal" with a second character
+> ("Pip", a mint blob); per the owner's direction both were removed: the app, bundle
+> (com.msull92.timi), cask (`timi`), modules (Timi/TimiKit) and the cat herself are
+> all named Timi, and Pip's character code, sounds, prototype file, and the character-
+> switching UI are gone. Timi's own behavior is unchanged — the refactor was gated on
+> her golden snapshots matching byte-for-byte. Sections below describe the original
+> two-character build process and remain as history; read "Mochi" as Timi's working
+> name.
 
-Source of truth: the prototype files. Where the mission document and the files disagree, the
-files win. Where the mission document deliberately *adapts* for native (no CRT stage, hover-
-revealed controls, hearts persist per day), the mission document wins — those deltas are
-listed in §5 below.
+A native macOS desktop app: a tiny pixel cat that lives above your windows and is a
+focus timer. Ported **exactly** from the web prototype (`Prototype/mochi-timer.jsx`),
+then exceeded in native polish.
+
+Source of truth: the prototype file. Where the mission document and the file disagree,
+the file wins. Where the mission document deliberately *adapts* for native (no CRT
+stage, hover-revealed controls, hearts persist per day), the mission document wins —
+those deltas are listed in §5 below.
 
 ---
 

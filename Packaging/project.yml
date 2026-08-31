@@ -2,9 +2,9 @@
 #   brew install xcodegen && xcodegen generate --spec Packaging/project.yml
 # The canonical build stays `swift build` / Packaging/build.sh.
 #
-# Two targets mirror the SwiftPM layout: the app imports the PixelPalKit
-# framework, matching the `import PixelPalKit` statements in Sources/PixelPal.
-name: PixelPal
+# Two targets mirror the SwiftPM layout: the app imports the TimiKit framework,
+# matching the `import TimiKit` statements in Sources/Timi.
+name: Timi
 options:
   bundleIdPrefix: com.msull92
   deploymentTarget:
@@ -14,30 +14,30 @@ packages:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: 2.0.0
 targets:
-  PixelPalKit:
+  TimiKit:
     type: framework
     platform: macOS
     sources:
-      - path: ../Sources/PixelPalKit
+      - path: ../Sources/TimiKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.pixelpalkit
-  PixelPal:
+        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.timikit
+  Timi:
     type: application
     platform: macOS
     sources:
-      - path: ../Sources/PixelPal
+      - path: ../Sources/Timi
     dependencies:
-      - target: PixelPalKit
+      - target: TimiKit
         embed: true
       - package: KeyboardShortcuts
     info:
       path: Info.plist
     entitlements:
-      path: PixelPal.entitlements
+      path: Timi.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.pixelpal
+        PRODUCT_BUNDLE_IDENTIFIER: com.msull92.timi
         ENABLE_HARDENED_RUNTIME: YES
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1

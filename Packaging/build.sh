@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds a universal (arm64 + x86_64) PixelPal.app into dist/.
+# Builds a universal (arm64 + x86_64) Timi.app into dist/.
 #
 #   ./Packaging/build.sh
 #
@@ -13,18 +13,18 @@ cd "$(dirname "$0")/.."
 
 VERSION="${VERSION:-0.1.0}"
 IDENTITY="${CODESIGN_IDENTITY:--}"
-APP=dist/PixelPal.app
+APP=dist/Timi.app
 
 echo "==> swift build (universal, release)"
 swift build -c release --arch arm64 --arch x86_64
 
 BUILD=.build/apple/Products/Release
-test -x "$BUILD/PixelPal" || { echo "build product missing"; exit 1; }
+test -x "$BUILD/Timi" || { echo "build product missing"; exit 1; }
 
 echo "==> assembling $APP"
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BUILD/PixelPal" "$APP/Contents/MacOS/PixelPal"
+cp "$BUILD/Timi" "$APP/Contents/MacOS/Timi"
 cp Packaging/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
@@ -43,9 +43,9 @@ cp Packaging/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 echo "==> codesign ($IDENTITY)"
 codesign --force --options runtime \
-  --entitlements Packaging/PixelPal.entitlements \
+  --entitlements Packaging/Timi.entitlements \
   --sign "$IDENTITY" "$APP"
 
 codesign --verify --deep --strict "$APP"
-lipo -archs "$APP/Contents/MacOS/PixelPal"
+lipo -archs "$APP/Contents/MacOS/Timi"
 echo "==> done: $APP (version $VERSION)"

@@ -68,7 +68,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           ./Packaging/release.sh
-          echo "sha256=$(cat dist/PixelPal-$VERSION.zip.sha256)" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(cat dist/Timi-$VERSION.zip.sha256)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         env:
@@ -80,12 +80,12 @@ jobs:
             NOTES="Signed and notarized build."
           else
             NOTES="⚠️ Unsigned (ad-hoc) build — no signing secrets were configured. \
-          Install with \`brew install --no-quarantine msull92/tap/pixel-pal\` or clear \
-          quarantine manually: \`xattr -dr com.apple.quarantine /Applications/PixelPal.app\`."
+          Install with \`brew install --no-quarantine msull92/tap/timi\` or clear \
+          quarantine manually: \`xattr -dr com.apple.quarantine /Applications/Timi.app\`."
           fi
           gh release create "v$VERSION" \
-            "dist/PixelPal-$VERSION.zip" \
-            --title "Pixel Pal $VERSION" \
+            "dist/Timi-$VERSION.zip" \
+            --title "Timi $VERSION" \
             --notes "$NOTES
           sha256: ${{ steps.package.outputs.sha256 }}"
 
@@ -101,13 +101,13 @@ jobs:
           mkdir -p Casks
           sed -e "s/^  version .*/  version \"$VERSION\"/" \
               -e "s/^  sha256 .*/  sha256 \"$SHA256\"/" \
-              ../Packaging/homebrew/Casks/pixel-pal.rb > Casks/pixel-pal.rb
-          BRANCH="pixel-pal-$VERSION"
+              ../Packaging/homebrew/Casks/timi.rb > Casks/timi.rb
+          BRANCH="timi-$VERSION"
           git checkout -b "$BRANCH"
-          git add Casks/pixel-pal.rb
-          git -c user.name=pixel-pal-bot -c user.email=bot@msull92.com \
-            commit -m "pixel-pal $VERSION"
+          git add Casks/timi.rb
+          git -c user.name=timi-bot -c user.email=bot@msull92.com \
+            commit -m "timi $VERSION"
           git push origin "$BRANCH"
           GH_TOKEN=$TAP_TOKEN gh pr create --repo msull92/homebrew-tap \
-            --head "$BRANCH" --title "pixel-pal $VERSION" \
-            --body "Automated bump from the pixel-pal release workflow."
+            --head "$BRANCH" --title "timi $VERSION" \
+            --body "Automated bump from the timi release workflow."
