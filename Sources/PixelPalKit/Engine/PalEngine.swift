@@ -185,6 +185,7 @@ public final class PalEngine {
     // Engine-internal one-shot timeline (replaces the prototype's setTimeout)
     var wave2At = Double.infinity
     var finishMewAt = Double.infinity
+    var pendingHeartLand = false
 
     // Latest inputs (kept for pointerUp, which needs screen bounds)
     public private(set) var screen = Rect(x: 0, y: 0, w: 1440, h: 900)
@@ -448,7 +449,7 @@ public final class PalEngine {
             if let imp = Physics.flightStep(pos: &pos, vel: &vel, bounds: screen, dt: dt) {
                 scale = min(scale, 1 - 0.18 * imp)
                 lastInteract = t
-                out.sounds.append(.boing(imp))
+                out.sounds.append(.boing(imp, bendStyle: isMochi))
                 if isMochi && imp > 0.55 {
                     out.sounds.append(.hiss(imp))
                 }
@@ -577,7 +578,14 @@ public final class PalEngine {
         }
         miniHearts.removeAll { $0.life <= 0 }
 
-        // flying heart progression
+        // flying heart progression. The prototype draws the mini heart at the slot
+        // on the landing frame and the row count only grows on the NEXT frame (the
+        // row is painted before the flyHeart block increments) — replicated via a
+        // deferred increment.
+        if pendingHeartLand {
+            pendingHeartLand = false
+            hearts += 1
+        }
         var flyHeartPos: Vec2?
         if let fh = flyHeart, t >= fh.t0 {
             let k = clamp((t - fh.t0) / 900, 0, 1)
@@ -587,10 +595,9 @@ public final class PalEngine {
             flyHeartPos = Vec2(ex, ey)
             if k >= 1 {
                 flyHeart = nil
-                hearts += 1
+                pendingHeartLand = true
                 out.sounds.append(.blip)
                 out.events.append(.heartLanded)
-                flyHeartPos = nil
             }
         }
 
@@ -628,6 +635,10 @@ public final class PalEngine {
         f.sit = !isMochi && bored && !f.squashing
         f.loaf = isMochi && (bored || (mode == .done && t - doneT >= 3200)) && !f.squashing
         f.crouch = isMochi && panic && !airborne
+        // Native adaptation (mission §6): Reduce Motion scales breath amplitude
+        // ×0.35 — the prototypes don't, but the mission doc explicitly asks for it.
+        // After integer rounding this stills the ±1 px bob entirely; the glow
+        // still breathes. Confirmed as a deliberate deviation in review.
         let breathAmp = (panic ? config.panicBounceAmp : config.normalBounceAmp) * (rm ? 0.35 : 1)
         let bounceOff = (sleepingNow || f.sit || f.loaf) ? 0 : jsRound(sin(phase) * breathAmp)
         f.bounce = bounceOff

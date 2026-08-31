@@ -11,7 +11,9 @@ public enum PalSound: Equatable, Sendable {
     case bleep2(Double, Double)
     case buzz
     case fanfare(volume: Double, pipTopNote: Bool)
-    case boing(Double)
+    /// `bendStyle` = Mochi's boing (built on `bend`, 12 ms attack) vs Pip's
+    /// (built on `sweep`, 4 ms attack) — a deliberate per-character difference.
+    case boing(Double, bendStyle: Bool)
     case thud
     case blip
     case sleepy

@@ -105,7 +105,11 @@ public enum SoundRecipes {
             }
             return voices
 
-        case .boing(let i):
+        case .boing(let i, let bendStyle):
+            if bendStyle {
+                // Mochi: bend-based boing (12 ms attack).
+                return [.bend(420 + 200 * i, 150, 0.09, 0.05 * i + 0.015)]
+            }
             return [.sweep(420 + 200 * i, 150, 0.09, 0.05 * i + 0.015)]
 
         case .thud:
@@ -139,11 +143,15 @@ public enum SoundRecipes {
             return [.bend(320, 250, 0.18, 0.04, .triangle, vibrato: 4)]
 
         case .purr:
+            // The oscillator + LFO run until t0+1.45 in the prototype — the 23 Hz
+            // throb audibly outlives the 1.0→1.4 s gain fade (see render(): the AM
+            // sum may push net gain negative, a WebAudio polarity flip).
             return [SynthVoice(
                 wave: .triangle, freq: 52, freqEnd: nil, freqRampDur: 1.45,
                 vibratoDepth: 0, vibratoRate: 9, amRate: 23, amDepth: 0.02,
                 highpass: nil,
-                envelope: [EnvPoint(0, 0.022), EnvPoint(1.0, 0.022), EnvPoint(1.4, 0.0001)],
+                envelope: [EnvPoint(0, 0.022), EnvPoint(1.0, 0.022),
+                           EnvPoint(1.4, 0.0001), EnvPoint(1.45, 0.0001)],
                 delay: 0)]
 
         case .hiss(let i):
@@ -170,9 +178,23 @@ public final class SynthDSP {
         var phase: Double = 0
         var vibPhase: Double = 0
         var amPhase: Double = 0
-        var hpX1: Double = 0
-        var hpY1: Double = 0
+        // Per-voice biquad high-pass state + coefficients (hiss). WebAudio's
+        // BiquadFilterNode is 2nd order (12 dB/oct), Q defaults to 1.
+        var hpB0 = 0.0, hpB1 = 0.0, hpB2 = 0.0, hpA1 = 0.0, hpA2 = 0.0
+        var hpX1 = 0.0, hpX2 = 0.0, hpY1 = 0.0, hpY2 = 0.0
         var rng: UInt64 = 0x9E3779B97F4A7C15
+
+        mutating func configureHighpass(cutoff: Double, sampleRate: Double) {
+            let omega = 2 * Double.pi * cutoff / sampleRate
+            let alpha = sin(omega) / 2  // Q = 1
+            let cosw = cos(omega)
+            let a0 = 1 + alpha
+            hpB0 = ((1 + cosw) / 2) / a0
+            hpB1 = (-(1 + cosw)) / a0
+            hpB2 = ((1 + cosw) / 2) / a0
+            hpA1 = (-2 * cosw) / a0
+            hpA2 = (1 - alpha) / a0
+        }
     }
 
     private var active: [Active] = []
@@ -204,7 +226,11 @@ public final class SynthDSP {
 
     public func scheduleVoice(_ v: SynthVoice) {
         let start = sampleTime + Int64(v.delay * sampleRate)
-        active.append(Active(voice: v, startSample: start))
+        var a = Active(voice: v, startSample: start)
+        if let hp = v.highpass {
+            a.configureHighpass(cutoff: hp, sampleRate: sampleRate)
+        }
+        active.append(a)
     }
 
     private func envelopeGain(_ env: [EnvPoint], at t: Double) -> Double {
@@ -252,9 +278,11 @@ public final class SynthDSP {
                 }
                 var gain = envelopeGain(v.envelope, at: t)
                 if v.amDepth > 0 {
+                    // No clamp: WebAudio sums the LFO into the gain AudioParam, so
+                    // the net gain can go negative — a polarity flip whose audible
+                    // amplitude is |gain| (keeps the purr throbbing through the fade).
                     gain += v.amDepth * sin(active[i].amPhase * 2 * .pi)
                     active[i].amPhase += v.amRate / sampleRate
-                    gain = max(0, gain)
                 }
                 var value = 0.0
                 if v.wave == .noise {
@@ -262,11 +290,13 @@ public final class SynthDSP {
                     r ^= r << 13; r ^= r >> 7; r ^= r << 17
                     active[i].rng = r
                     value = Double(Int64(bitPattern: r) >> 11) / Double(1 << 52)
-                    if let hp = v.highpass {
-                        let rc = 1 / (2 * .pi * hp)
-                        let a = rc / (rc + 1 / sampleRate)
-                        let y = a * (active[i].hpY1 + value - active[i].hpX1)
+                    if v.highpass != nil {
+                        let a = active[i]
+                        let y = a.hpB0 * value + a.hpB1 * a.hpX1 + a.hpB2 * a.hpX2
+                            - a.hpA1 * a.hpY1 - a.hpA2 * a.hpY2
+                        active[i].hpX2 = a.hpX1
                         active[i].hpX1 = value
+                        active[i].hpY2 = a.hpY1
                         active[i].hpY1 = y
                         value = y
                     }
