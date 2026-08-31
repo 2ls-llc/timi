@@ -22,7 +22,9 @@ final class PalController: NSObject, PalViewDelegate {
     let panel = PalPanel()
     let palView = PalView(frame: NSRect(origin: .zero, size: PanelGeometry.size))
     var sound: SoundSink = NullSoundSink()
-    var settings = AppSettings()
+    let settingsStore: SettingsStore
+    var settings: AppSettings { settingsStore.settings }
+    let notifier = Notifier()
 
     /// Hooks the app layer (status bar, persistence, notifications) plugs into.
     var onModeChanged: (() -> Void)?
@@ -50,13 +52,15 @@ final class PalController: NSObject, PalViewDelegate {
         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
 
-    override init() {
-        let config = CharacterConfig.config(for: .pip)
+    init(settingsStore: SettingsStore = SettingsStore()) {
+        self.settingsStore = settingsStore
+        let config = CharacterConfig.config(for: settingsStore.settings.character)
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         // Prototype home: (w·0.5, h·0.45 from the top).
         let home = Vec2(screen.midX, screen.minY + screen.height * 0.55)
         engine = PalEngine(config: config, seed: UInt64.random(in: .min ... .max),
                            tMs: CACurrentMediaTime() * 1000, home: home, hearts: 0)
+        timer.setDuration(ms: settingsStore.settings.lastDurationMs)
         super.init()
 
         panel.contentView = palView
@@ -72,10 +76,16 @@ final class PalController: NSObject, PalViewDelegate {
     }
 
     func startRunning() {
-        panel.orderFrontRegardless()
+        sound.setMuted(settings.muted)
+        sound.setVolume(settings.volume)
+        applyCabinetLook()
+        if settings.palVisible {
+            panel.orderFrontRegardless()
+        }
         let link = palView.displayLink(target: self, selector: #selector(frameTick(_:)))
         link.add(to: .main, forMode: .common)
         displayLink = link
+        displayLink?.isPaused = !settings.palVisible
         applyCadence(60)
     }
 
@@ -289,16 +299,58 @@ final class PalController: NSObject, PalViewDelegate {
     }
 
     func toggleMute() {
-        settings.muted.toggle()
-        sound.setMuted(settings.muted)
+        setSound(on: settings.muted)
+    }
+
+    func setSound(on: Bool) {
+        settingsStore.update { $0.muted = !on }
+        sound.setMuted(!on)
         controlsStrip?.refreshChips()
+    }
+
+    func setVolume(_ volume: Double) {
+        settingsStore.update { $0.volume = clamp(volume, 0, 1) }
+        sound.setVolume(settings.volume)
+    }
+
+    func setShowMenuBarClock(_ show: Bool) {
+        settingsStore.update { $0.showMenuBarClock = show }
+    }
+
+    func setInteractionMode(_ mode: InteractionMode) {
+        settingsStore.update { $0.interactionMode = mode }
+    }
+
+    func setNotificationsEnabled(_ enabled: Bool) {
+        settingsStore.update { $0.notificationsEnabled = enabled }
+    }
+
+    func setCabinet(_ on: Bool) {
+        settingsStore.update { $0.cabinetFrame = on }
+        applyCabinetLook()
+    }
+
+    private func applyCabinetLook() {
+        let on = settings.cabinetFrame
+        palView.cabinetLayer.isHidden = !on
+        palView.scanlineLayer.isHidden = !on
+        if on {
+            let size = palView.cabinetLayer.frame.size
+            palView.cabinetLayer.contents = CabinetImages.background(for: engine.config.id, size: size)
+            palView.scanlineLayer.contents = CabinetImages.scanlines(size: size)
+        }
+    }
+
+    func setLaunchAtLogin(_ on: Bool) {
+        settingsStore.update { $0.launchAtLogin = on }
+        LoginItem.set(enabled: on)
     }
 
     func pickDuration(ms: Double) {
         guard timer.mode == .idle else { return }
         engine.noteInteraction(tMs: nowMs)
         timer.setDuration(ms: ms)
-        settings.lastDurationMs = ms
+        settingsStore.update { $0.lastDurationMs = ms }
         sound.play(.blip)
         controlsStrip?.refreshChips()
     }
@@ -307,6 +359,7 @@ final class PalController: NSObject, PalViewDelegate {
         engine.onStart(tMs: tMs, reduceMotion: reduceMotion)
         engine.config.sounds(for: .start).forEach { sound.play($0) }
         scheduleTickTimer()
+        notifier.requestPermissionIfNeeded(enabled: settings.notificationsEnabled)
         onSessionStarted?()
     }
 
@@ -325,6 +378,9 @@ final class PalController: NSObject, PalViewDelegate {
                                     pipTopNote: engine.config.id == .pip))
                 cancelTickTimer()
                 scheduleAutoReset()
+                notifier.notifyCompletion(characterName: engine.config.name,
+                                          durationMs: timer.durationMs,
+                                          enabled: settings.notificationsEnabled)
                 onSessionCompleted?()
             }
         }
@@ -387,13 +443,14 @@ final class PalController: NSObject, PalViewDelegate {
 
     func switchCharacter(to id: CharacterID) {
         guard id != engine.config.id else { return }
-        settings.character = id
+        settingsStore.update { $0.character = id }
         let old = engine
         engine = PalEngine(config: .config(for: id),
                            seed: UInt64.random(in: .min ... .max),
                            tMs: nowMs, home: old.home, hearts: old.hearts)
         engine.pos = old.pos
         updateGlowImage()
+        applyCabinetLook()
         controlsStrip?.characterChanged()
     }
 
@@ -413,7 +470,7 @@ final class PalController: NSObject, PalViewDelegate {
     // MARK: - Visibility
 
     func setPalVisible(_ visible: Bool) {
-        settings.palVisible = visible
+        settingsStore.update { $0.palVisible = visible }
         if visible {
             panel.orderFrontRegardless()
             setPaused(false)

@@ -106,6 +106,10 @@ final class DebugHarness {
             if parts.count > 1, let dy = Double(parts[1]) {
                 controller.palViewScrolled(deltaY: dy, precise: false)
             }
+        case "cabinet":
+            controller.setCabinet(parts.count > 1 && parts[1] == "on")
+        case "settings":
+            (NSApp.delegate as? AppDelegate)?.showSettingsForDebug()
         case "state":
             let e = controller.engine
             let info = "mode=\(controller.timer.mode.rawValue) pos=\(Int(e.pos.x)),\(Int(e.pos.y)) " +

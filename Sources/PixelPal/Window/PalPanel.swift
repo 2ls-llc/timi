@@ -66,6 +66,7 @@ final class PalView: NSView {
     let glowLayer = CALayer()
     let cabinetLayer = CALayer()
     let canvasLayer = CALayer()
+    let scanlineLayer = CALayer()
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -95,6 +96,11 @@ final class PalView: NSView {
         canvasLayer.contentsGravity = .resize
         canvasLayer.actions = noAnimations
         layer?.addSublayer(canvasLayer)
+
+        scanlineLayer.frame = cabinetLayer.frame
+        scanlineLayer.actions = noAnimations
+        scanlineLayer.isHidden = true
+        layer?.addSublayer(scanlineLayer)
     }
 
     @available(*, unavailable)
