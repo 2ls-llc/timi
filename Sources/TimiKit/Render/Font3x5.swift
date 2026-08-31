@@ -1,6 +1,6 @@
 import Foundation
 
-/// The 3×5 pixel font (":" and "!" are 1 wide). Glyphs verbatim from the prototypes.
+/// The 3×5 pixel font (":" and "!" are 1 wide). Glyphs verbatim from the prototype.
 public enum Font3x5 {
     public static let glyphs: [Character: [String]] = [
         "0": ["###", "#.#", "#.#", "#.#", "###"],

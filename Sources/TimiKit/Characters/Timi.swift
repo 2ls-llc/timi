@@ -71,8 +71,4 @@ public struct CharacterConfig: Sendable {
         normalBounceAmp: 1.1, panicBounceAmp: 0.6,
         flyHeartDelayMs: 1100, happyMs: 10000, autoResetMs: 6400,
         finishHopImpulse: -50, noticeMs: 600)
-
-    public static func config(for id: CharacterID) -> CharacterConfig {
-        .timi
-    }
 }

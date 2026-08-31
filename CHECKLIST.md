@@ -109,7 +109,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 10.7 Multi-display clamps, display sleep, screen lock, termination save, Spaces (canJoinAllSpaces)
 
 ## §11 Packaging (M7)
-- [x] 11.1 Bundle id com.msull92.pixelpal; PixelPal.app; cask token pixel-pal (never "pip")
+- [x] 11.1 Bundle id com.msull92.timi; Timi.app; cask token timi (never "pip")
 - [x] 11.2 build.sh (universal, verified: x86_64+arm64, sandbox entitlement, launches) / notarize.sh / release.sh (zip+sha256 verified)
 - [x] 11.3 Homebrew cask per spec + README brew instructions (tap: msull92/homebrew-tap)
 - [x] 11.4 release.yml: tests → build → sign+notarize if secrets else ad-hoc with release note → Release → tap bump PR
@@ -117,7 +117,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 
 ## §12 Quality bar
 - [x] 12.1 CPU measured (see 1.4) — numbers in README
-- [x] 12.2 Snapshot evidence: 15 deterministic goldens (idle, running-hidden-clock, panic, done-banner, sleeping, held, wall-impact, pat, sad, bored, mochi nap/hunt-crouch/wiggle/zoomies/loaf) + live PNGs; 1× and 3× crispness (2× display: 6 device px per cell by construction)
+- [x] 12.2 Snapshot evidence: 13 deterministic goldens (idle, running-hidden-clock, done-banner, held, wall-impact, pat, sad, bored-loaf, nap, hunt-crouch, wiggle, zoomies, loaf — the hunt covers "panic", the nap covers "sleeping") + live PNGs; 1× and 3× crispness (2× display: 6 device px per cell by construction)
 - [x] 12.3 Tap during hop/bounce counts (T)
 - [x] 12.4 Timer ±50 ms over 90 min incl. sleep/wake (T: exact wall-clock arithmetic)
 - [x] 12.5 Reduce Motion (T); VoiceOver: pal is a labeled button with live value, chips labeled; Increase Contrast: not implemented (spec marks it optional)
@@ -129,7 +129,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 13.3 Milestone commits M1–M7
 - [x] 13.4 Build+test+launch+snapshot evidence per milestone
 - [x] 13.5 No extra features; no simplified behaviors (adversarial review confirmed; 4 fixes applied)
-- [x] 13.6 clone && ./Packaging/build.sh → PixelPal.app (verified end-to-end incl. launch); swift test green (89); README complete
+- [x] 13.6 clone && ./Packaging/build.sh → Timi.app (verified end-to-end incl. launch); swift test green (86); README complete
 
 ### Not machine-verifiable in this environment (honest notes)
 - Real-desktop screenshots blocked by Screen Recording TCC; layer-tree self-captures

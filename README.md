@@ -111,11 +111,13 @@ Sources/TimiKit         deterministic core — no AppKit
   Audio/     SynthDSP — polyBLEP chip synth, WebAudio-faithful envelopes,
              and the cat voice (meow, mew, trill, mrrp, purr, hiss)
   Characters/ Timi's constants (palette, timings, sounds)
+  Persistence/ settings + session-record models
 Sources/Timi            the AppKit shell
   Window/    PalPanel (borderless, non-activating, click-through), layers
   App/       PalController (display link, cadence, input), status bar,
              settings (SwiftUI), hotkey, notifications
   Audio/     ChipSynth — AVAudioSourceNode host, auto-pauses when silent
+  Persistence/ UserDefaults settings store, sessions.json ledger
 ```
 
 The canvas is rendered nearest-neighbor at exactly 3 pt per logical pixel

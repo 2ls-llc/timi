@@ -1,6 +1,6 @@
 import Foundation
 
-/// Pure chiptune DSP: voice descriptions (transcribed from the prototypes'
+/// Pure chiptune DSP: voice descriptions (transcribed from the prototype's
 /// WebAudio recipes), sample rendering, and the master chain
 /// (gain 0.5 → low-pass 7.5 kHz). No audio framework — the app hosts this
 /// inside an AVAudioSourceNode; tests render buffers directly.
@@ -66,7 +66,7 @@ public struct SynthVoice: Sendable {
     }
 }
 
-/// PalSound → voices, exactly per the two prototypes' `makeAudio()`.
+/// PalSound → voices, exactly per the prototype's `makeAudio()`.
 public enum SoundRecipes {
     public static func voices(for sound: PalSound) -> [SynthVoice] {
         switch sound {

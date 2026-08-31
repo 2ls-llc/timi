@@ -150,7 +150,6 @@ public final class PalEngine {
     public var flashT = -1e9
     public var hopY = 0.0
     public var hopV = 0.0
-    public var prevHopY = 0.0
     public var landT = -1e9
     public var doneT = -1e9
     public var prevSegs = -1
@@ -394,7 +393,6 @@ public final class PalEngine {
         let stretching = t - stretchT < 650
 
         // hop physics (canvas pixels, y down)
-        prevHopY = hopY
         let landedHard = Physics.hopStep(hopY: &hopY, hopV: &hopV, dt: dt)
         if landedHard && !rm {
             landT = t
