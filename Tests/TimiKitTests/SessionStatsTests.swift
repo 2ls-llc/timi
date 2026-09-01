@@ -61,6 +61,19 @@ final class SessionStatsTests: XCTestCase {
         XCTAssertEqual(SessionStats.streakDays(records, now: now, calendar: cal), 0)
     }
 
+    func testSessionCrossingMidnightCreditsTheDayItFinished() {
+        // Started 23:50 on the 31st, finished 00:15 on the 1st: the pal awards the
+        // heart on the 1st, so the ledger must agree.
+        var late = rec(date(2026, 8, 31, hour: 23))
+        late.completedAt = date(2026, 9, 1, hour: 0)
+        let now = date(2026, 9, 1, hour: 9)
+        XCTAssertEqual(SessionStats.heartsToday([late], now: now, calendar: cal), 1)
+        XCTAssertEqual(SessionStats.streakDays([late], now: now, calendar: cal), 1)
+        // Records from before completedAt existed still credit their start day.
+        let legacy = rec(date(2026, 8, 31))
+        XCTAssertEqual(SessionStats.heartsToday([legacy], now: now, calendar: cal), 0)
+    }
+
     func testMultipleSessionsOnOneDayCountOnceForStreak() {
         let records = [rec(date(2026, 9, 1, hour: 9)), rec(date(2026, 9, 1, hour: 11)), rec(date(2026, 8, 31))]
         XCTAssertEqual(SessionStats.streakDays(records, now: date(2026, 9, 1, hour: 12), calendar: cal), 2)

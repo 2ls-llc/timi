@@ -118,6 +118,19 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNil(store.settings.hasSeenHint)
     }
 
+    func testUnknownEnumValueFallsBackWithoutWipingOtherSettings() throws {
+        // A newer build wrote an interaction mode this build doesn't know.
+        let blob: [String: Any] = ["interactionMode": "teleport", "volume": 0.3, "muted": true,
+                                   "lastDurationMs": 0]
+        let defaults = scratchDefaults()
+        defaults.set(try JSONSerialization.data(withJSONObject: blob), forKey: "timi.settings.v1")
+        let store = SettingsStore(defaults: defaults)
+        XCTAssertEqual(store.settings.interactionMode, .hover, "unknown value → default")
+        XCTAssertEqual(store.settings.volume, 0.3, "…while every other field survives")
+        XCTAssertTrue(store.settings.muted)
+        XCTAssertEqual(store.settings.lastDurationMs, 1_500_000, "nonsense duration → default")
+    }
+
     func testCorruptSettingsFallBackToDefaultsInsteadOfCrashing() {
         let defaults = scratchDefaults()
         defaults.set(Data("garbage".utf8), forKey: "timi.settings.v1")

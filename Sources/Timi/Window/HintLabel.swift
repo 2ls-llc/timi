@@ -21,7 +21,7 @@ final class HintLabel: NSView {
         paragraph.alignment = .center
         paragraph.lineSpacing = 2
         label.attributedStringValue = NSAttributedString(
-            string: "TAP TO START · HOLD TO PAT\nDRAG OR FLING · SCROLL = TIME",
+            string: "TAP TO START · HOLD TO PAT · DRAG OR FLING\nHOVER FOR PRESETS · SCROLL SETS MINUTES",
             attributes: [.font: font, .foregroundColor: color, .kern: 1.0,
                          .paragraphStyle: paragraph])
         label.maximumNumberOfLines = 2

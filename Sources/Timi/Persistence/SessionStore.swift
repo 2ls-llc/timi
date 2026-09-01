@@ -28,7 +28,16 @@ final class SessionStore {
         guard let data = try? Data(contentsOf: fileURL) else { return }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        records = (try? decoder.decode([SessionRecord].self, from: data)) ?? []
+        if let decoded = try? decoder.decode([SessionRecord].self, from: data) {
+            records = decoded
+        } else {
+            // Unreadable ledger: keep the bytes rather than overwrite them on the
+            // next save, so nothing is lost silently.
+            let backup = fileURL.appendingPathExtension("bak")
+            try? FileManager.default.removeItem(at: backup)
+            try? FileManager.default.copyItem(at: fileURL, to: backup)
+            NSLog("SessionStore: could not decode \(fileURL.lastPathComponent); kept a copy at \(backup.lastPathComponent)")
+        }
     }
 
     private func save() {
@@ -48,9 +57,10 @@ final class SessionStore {
         return records.count - 1
     }
 
-    func completeSession(at index: Int) {
+    func completeSession(at index: Int, now: Date = Date()) {
         guard records.indices.contains(index) else { return }
         records[index].completed = true
+        records[index].completedAt = now
         save()
     }
 

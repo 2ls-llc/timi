@@ -55,15 +55,24 @@ final class PalController: NSObject, PalViewDelegate {
     init(settingsStore: SettingsStore = SettingsStore()) {
         self.settingsStore = settingsStore
         let config = CharacterConfig.timi
-        let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        // Come back on the display she last rested on if it's still attached,
+        // otherwise the main one.
+        let startScreen: NSScreen? = {
+            if let id = settingsStore.settings.lastScreenID,
+               let remembered = NSScreen.screens.first(where: { Self.screenID(for: $0) == id }) {
+                return remembered
+            }
+            return NSScreen.main ?? NSScreen.screens.first
+        }()
+        let screen = startScreen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         // Prototype home: (w·0.5, h·0.45 from the top) — unless this screen
         // remembers where the pal last rested (§3).
         var home = Vec2(screen.midX, screen.minY + screen.height * 0.55)
-        if let main = NSScreen.main,
-           let stored = settingsStore.settings.lastPositionPerScreen?[Self.screenID(for: main)],
+        if let startScreen,
+           let stored = settingsStore.settings.lastPositionPerScreen?[Self.screenID(for: startScreen)],
            stored.count == 2 {
             let rect = TimiKit.Rect(x: screen.origin.x, y: screen.origin.y,
-                                        w: screen.width, h: screen.height)
+                                    w: screen.width, h: screen.height)
             home = Physics.clampHome(Vec2(stored[0], stored[1]), in: rect)
         }
         engine = PalEngine(config: config, seed: UInt64.random(in: .min ... .max),
@@ -125,7 +134,7 @@ final class PalController: NSObject, PalViewDelegate {
         let cursorMoved = hypot(cursor.x - lastCursor.x, cursor.y - lastCursor.y) > 0.5
         lastCursor = cursor
         let hovered = computeHovered(cursor: cursor)
-        updateClickThrough(cursor: cursor, hovered: hovered)
+        let interactive = updateClickThrough(cursor: cursor, hovered: hovered)
 
         let screenRect = currentScreenRect()
         let input = EngineInput(
@@ -149,7 +158,8 @@ final class PalController: NSObject, PalViewDelegate {
             panel.setFrameOrigin(origin)
         }
 
-        controlsStrip?.updateVisibility(hovered: hovered, mode: timer.mode, tMs: tMs)
+        // In hold-⌥ mode, chips that would not accept the click must not appear.
+        controlsStrip?.updateVisibility(hovered: hovered && interactive, mode: timer.mode, tMs: tMs)
         updateCadence(hovered: hovered, cursor: cursor, tMs: tMs)
         rememberPositionIfSettled(tMs: tMs)
 
@@ -251,7 +261,9 @@ final class PalController: NSObject, PalViewDelegate {
         return false
     }
 
-    private func updateClickThrough(cursor: NSPoint, hovered: Bool) {
+    /// Returns whether the panel currently accepts mouse input.
+    @discardableResult
+    private func updateClickThrough(cursor: NSPoint, hovered: Bool) -> Bool {
         let interactive: Bool
         if engine.dragging {
             interactive = true
@@ -265,6 +277,7 @@ final class PalController: NSObject, PalViewDelegate {
         if panel.ignoresMouseEvents == interactive {
             panel.ignoresMouseEvents = !interactive
         }
+        return interactive
     }
 
     private func currentScreenRect() -> TimiKit.Rect {
@@ -332,8 +345,10 @@ final class PalController: NSObject, PalViewDelegate {
 
     private var scrollAccum: CGFloat = 0
 
-    func palViewScrolled(deltaY: CGFloat, precise: Bool) {
-        guard timer.mode == .idle else { return }
+    func palViewScrolled(deltaY: CGFloat, precise: Bool, gestureBegan: Bool) {
+        guard timer.mode == .idle else { scrollAccum = 0; return }
+        if gestureBegan { scrollAccum = 0 }
+        dismissHintIfNeeded()
         engine.noteInteraction(tMs: nowMs)
         var steps = 0
         if precise {
@@ -444,12 +459,15 @@ final class PalController: NSObject, PalViewDelegate {
     }
 
     func setLaunchAtLogin(_ on: Bool) {
-        settingsStore.update { $0.launchAtLogin = on }
         LoginItem.set(enabled: on)
+        // Store what the system says, not what was asked — registration can land
+        // in "requires approval".
+        settingsStore.update { $0.launchAtLogin = LoginItem.isEnabled }
     }
 
     func pickDuration(ms: Double) {
         guard timer.mode == .idle else { return }
+        dismissHintIfNeeded()
         engine.noteInteraction(tMs: nowMs)
         timer.setDuration(ms: ms)
         settingsStore.update { $0.lastDurationMs = ms }
@@ -573,6 +591,7 @@ final class PalController: NSObject, PalViewDelegate {
             var map = $0.lastPositionPerScreen ?? [:]
             map[id] = [home.x, home.y]
             $0.lastPositionPerScreen = map
+            $0.lastScreenID = id
         }
     }
 
@@ -608,23 +627,54 @@ extension PalController {
     func promptCustomDuration() {
         guard timer.mode == .idle else { return }
         engine.noteInteraction(tMs: CACurrentMediaTime() * 1000)
+        let previousApp = NSWorkspace.shared.frontmostApplication
         NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = "Custom Duration"
-        alert.informativeText = "Focus session length in minutes (1–90)."
-        alert.addButton(withTitle: "Set")
-        alert.addButton(withTitle: "Cancel")
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 90, height: 24))
+        defer { Self.returnFocus(to: previousApp) }
+
         let minutes = timer.durationMs / 60_000
-        field.stringValue = minutes == minutes.rounded()
-            ? "\(Int(minutes))" : String(format: "%.1f", minutes)
-        field.placeholderString = "25"
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn,
-              let entered = Double(field.stringValue.trimmingCharacters(in: .whitespaces)),
-              entered > 0 else { return }
-        pickDuration(ms: clamp(entered, 1, 90) * 60_000)
+        var draft = minutes == minutes.rounded() ? "\(Int(minutes))" : String(format: "%.1f", minutes)
+        while true {
+            let alert = NSAlert()
+            alert.messageText = "Custom Duration"
+            alert.informativeText = "Session length in minutes, 1–90. Decimals are fine (1.5 = 90 s)."
+            alert.addButton(withTitle: "Set")
+            alert.addButton(withTitle: "Cancel")
+            let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 90, height: 24))
+            field.stringValue = draft
+            field.placeholderString = "25"
+            alert.accessoryView = field
+            alert.window.initialFirstResponder = field
+            alert.layout()
+            positionOnPalScreen(alert.window)
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+            let text = field.stringValue.trimmingCharacters(in: .whitespaces)
+                .replacingOccurrences(of: ",", with: ".")
+            if let entered = Double(text), entered >= 1, entered <= 90 {
+                pickDuration(ms: entered * 60_000)
+                return
+            }
+            // Out of range or not a number: say so audibly and ask again rather
+            // than silently clamping or dismissing.
+            NSSound.beep()
+            draft = text
+        }
+    }
+
+    /// Center a window on the display Timi is on (not necessarily the main one).
+    private func positionOnPalScreen(_ window: NSWindow) {
+        let p = NSPoint(x: engine.pos.x, y: engine.pos.y)
+        guard let screen = NSScreen.screens.first(where: { NSPointInRect(p, $0.frame) }) else { return }
+        let vf = screen.visibleFrame
+        window.setFrameOrigin(NSPoint(x: vf.midX - window.frame.width / 2,
+                                      y: vf.midY - window.frame.height / 2 + 60))
+    }
+
+    /// Hand activation back to whatever app was frontmost before Timi briefly
+    /// activated itself (an accessory app left active strands keyboard focus).
+    static func returnFocus(to app: NSRunningApplication?) {
+        guard let app, app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
+        NSApp.yieldActivation(to: app)
+        app.activate(options: [])
     }
 }
 

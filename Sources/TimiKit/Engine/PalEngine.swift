@@ -602,7 +602,7 @@ public final class PalEngine {
     private func wanderFidget() {
         let dir: Double = rng.next() < 0.5 ? -1 : 1
         home.x = clamp(home.x + dir * (50 + rng.next() * 45),
-                       screen.minX + Physics.homeMargin, screen.maxX - Physics.homeMargin)
+                       screen.minX + Physics.homeSideMargin, screen.maxX - Physics.homeSideMargin)
     }
 
     /// True while anything demands 60 fps (see the cadence policy in §4 of the

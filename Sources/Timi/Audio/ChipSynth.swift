@@ -1,4 +1,5 @@
 import AVFoundation
+import os
 import TimiKit
 
 /// AVAudioEngine host for the Kit's SynthDSP. One mono source node → main mixer
@@ -9,7 +10,10 @@ final class ChipSynth: SoundSink {
     private let engine = AVAudioEngine()
     private var source: AVAudioSourceNode!
     private let dsp: SynthDSP
-    private let lock = NSLock()
+    /// Guards `dsp` between the main thread and the real-time render thread.
+    /// An unfair lock donates priority to the holder, so the I/O thread is never
+    /// stranded behind a deprioritized main thread; critical sections are tiny.
+    private let lock = OSAllocatedUnfairLock()
     private var muted = false
     private var volume = 1.0
     private var lastPlay = Date.distantPast
@@ -27,9 +31,9 @@ final class ChipSynth: SoundSink {
             guard let ptr = abl[0].mData?.assumingMemoryBound(to: Float.self) else {
                 return noErr
             }
-            self.lock.lock()
-            self.dsp.render(into: ptr, frames: Int(frameCount))
-            self.lock.unlock()
+            self.lock.withLock {
+                self.dsp.render(into: ptr, frames: Int(frameCount))
+            }
             return noErr
         }
         engine.attach(source)
@@ -46,13 +50,15 @@ final class ChipSynth: SoundSink {
         // engine or the idle clock for it, or the engine never pauses in flow.
         let voices = SoundRecipes.voices(for: sound)
         guard !voices.isEmpty else { return }
-        lock.lock()
-        for v in voices { dsp.scheduleVoice(v) }
-        lock.unlock()
-        lastPlay = Date()
         if !engine.isRunning {
-            try? engine.start()
+            // No output device (or a start failure): drop the sound instead of
+            // queueing it to burst out the moment a device appears.
+            do { try engine.start() } catch { return }
         }
+        lock.withLock {
+            for v in voices { dsp.scheduleVoice(v) }
+        }
+        lastPlay = Date()
     }
 
     func setMuted(_ muted: Bool) {
@@ -66,16 +72,13 @@ final class ChipSynth: SoundSink {
     }
 
     private func applyGain() {
-        lock.lock()
-        dsp.masterGain = muted ? 0 : 0.5 * volume
-        lock.unlock()
+        let gain = muted ? 0 : 0.5 * volume
+        lock.withLock { dsp.masterGain = gain }
     }
 
     private func pauseIfIdle() {
         guard engine.isRunning, Date().timeIntervalSince(lastPlay) > 3 else { return }
-        lock.lock()
-        let idle = dsp.activeVoiceCount == 0
-        lock.unlock()
+        let idle = lock.withLock { dsp.activeVoiceCount == 0 }
         if idle {
             engine.pause()
         }

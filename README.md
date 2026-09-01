@@ -130,7 +130,7 @@ an axis-aligned layer transform. `PLAN.md` documents every porting decision and
 
 ```sh
 swift build            # debug build
-swift test             # 114 tests: timer, physics, engine behavior, DSP, canvas,
+swift test             # 116 tests: timer, physics, engine behavior, DSP, canvas,
                        # session stats, formatting, persistence, golden
                        # snapshots (Tests/snapshots/golden-*)
 swift run Timi         # run without a bundle (notifications/login disabled)

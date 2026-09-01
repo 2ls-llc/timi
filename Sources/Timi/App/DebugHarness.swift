@@ -98,7 +98,7 @@ final class DebugHarness {
             controller.debugHoverOverride = parts.count > 1 ? (parts[1] == "on") : nil
         case "scroll":
             if parts.count > 1, let dy = Double(parts[1]) {
-                controller.palViewScrolled(deltaY: dy, precise: false)
+                controller.palViewScrolled(deltaY: dy, precise: false, gestureBegan: true)
             }
         case "cabinet":
             controller.setCabinet(parts.count > 1 && parts[1] == "on")

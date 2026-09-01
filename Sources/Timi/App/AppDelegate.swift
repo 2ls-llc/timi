@@ -11,7 +11,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var debugHarness: DebugHarness?
     private var observers: [NSObjectProtocol] = []
     private var currentSessionIndex: Int?
-    private var midnightTimer: Timer?
     private var screenLocked = false
     private var displaysAsleep = false
 
@@ -58,16 +57,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.settingsWindow.bumpStats()
         }
         sessions.onReset = { [weak self] in
-            // "Reset hearts…" mid-session: the in-flight record is gone; don't
-            // let its finish write through a stale index.
-            self?.currentSessionIndex = nil
+            guard let self else { return }
+            // "Reset hearts…" mid-session: the in-flight record is gone. Re-open
+            // one for the running session so its finish still counts.
+            let mode = self.controller.timer.mode
+            if mode == .running || mode == .paused {
+                self.currentSessionIndex = self.sessions.beginSession(
+                    durationMs: self.controller.timer.durationMs,
+                    character: self.controller.engine.config.id)
+            } else {
+                self.currentSessionIndex = nil
+            }
         }
 
         controller.startRunning()
         debugHarness = DebugHarness(controller: controller)
-
         installSystemObservers()
-        scheduleMidnightRefresh()
+    }
+
+    /// The main menu's ⌘, and the status menu both land here.
+    @objc func showSettings() {
+        settingsWindow.show()
     }
 
     private func installSystemObservers() {
@@ -76,8 +86,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            self.controller.systemDidWake()
+            // Refresh the row BEFORE catching the timer up: a session that finished
+            // during sleep flies its heart in and adds one itself.
             self.controller.setHearts(self.sessions.heartsToday)
+            self.controller.systemDidWake()
             self.statusBar.refresh()
         })
         observers.append(workspace.addObserver(
@@ -92,11 +104,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.displaysAsleep = false
             self?.updatePauseState()
         })
+        observers.append(workspace.addObserver(
+            forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.controller.applyOutlineSetting()
+        })
         observers.append(NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
             self?.controller.screensChanged()
+        })
+        // Local midnight, time-zone changes, clock jumps — the hearts row shows *today*.
+        observers.append(NotificationCenter.default.addObserver(
+            forName: .NSCalendarDayChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.controller.setHearts(self.sessions.heartsToday)
+            self.statusBar.refresh()
         })
         // Screen lock — distributed notifications, per §10.
         let distributed = DistributedNotificationCenter.default()
@@ -121,26 +147,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.setPaused(paused)
     }
 
-    /// The hearts row shows *today's* sessions — refresh it at local midnight.
-    private func scheduleMidnightRefresh() {
-        let calendar = Calendar.current
-        guard let nextMidnight = calendar.nextDate(after: Date(),
-                                                   matching: DateComponents(hour: 0, minute: 0, second: 5),
-                                                   matchingPolicy: .nextTime) else { return }
-        midnightTimer = Timer(fire: nextMidnight, interval: 0, repeats: false) { [weak self] _ in
-            guard let self else { return }
-            self.controller.setHearts(self.sessions.heartsToday)
-            self.statusBar.refresh()
-            self.scheduleMidnightRefresh()
-        }
-        RunLoop.main.add(midnightTimer!, forMode: .common)
-    }
-
     /// Headless smoke test: build and lay out the settings form without showing
     /// a window or stealing focus (the debug harness runs on a live machine).
     func showSettingsForDebug() {
-        let view = SettingsView(controller: controller, sessions: sessions,
-                                onChanged: {}, ticker: SettingsStatsTicker())
+        let view = SettingsView(controller: controller, store: controller.settingsStore,
+                                sessions: sessions, onChanged: {}, ticker: SettingsStatsTicker())
         let hosting = NSHostingController(rootView: view)
         hosting.view.frame = NSRect(x: 0, y: 0, width: 420, height: 560)
         hosting.view.layoutSubtreeIfNeeded()

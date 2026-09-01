@@ -23,7 +23,13 @@ public enum Physics {
     public static let throwSpeed = 650.0
     public static let throwSpeedCap = 2600.0
     public static let flightExitSpeed = 140.0
-    public static let homeMargin = 90.0
+    /// The prototype clamps resting spots 90 pt inside the container on every side.
+    /// Natively the hover strip hangs 110 pt below the creature center and its
+    /// chip row is ~235 pt wide, so the bottom and side insets are larger — a cat
+    /// parked in a bottom corner must not leave her presets behind the Dock.
+    public static let homeMargin = 90.0          // top
+    public static let homeSideMargin = 125.0
+    public static let homeBottomMargin = 120.0
     public static let hopGravity = 260.0
     public static let walkSpeed = 90.0
     public static let worriedSpeed = 420.0
@@ -81,8 +87,8 @@ public enum Physics {
 
     /// Where the pal settles after a drag/flight: 90 pt inside the screen.
     public static func clampHome(_ p: Vec2, in bounds: Rect) -> Vec2 {
-        Vec2(clamp(p.x, bounds.minX + homeMargin, bounds.maxX - homeMargin),
-             clamp(p.y, bounds.minY + homeMargin, bounds.maxY - homeMargin))
+        Vec2(clamp(p.x, bounds.minX + homeSideMargin, bounds.maxX - homeSideMargin),
+             clamp(p.y, bounds.minY + homeBottomMargin, bounds.maxY - homeMargin))
     }
 
     /// Axis-aligned velocity squash: dominant axis stretches 1+st, the other 1−0.6·st.

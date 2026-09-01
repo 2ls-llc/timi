@@ -1,13 +1,14 @@
 import Foundation
+import Combine
 import TimiKit
 
 /// UserDefaults-backed settings. The whole Codable struct is stored under one key;
-/// every mutation persists immediately.
-final class SettingsStore {
+/// every mutation persists immediately and publishes to SwiftUI observers.
+final class SettingsStore: ObservableObject {
     private static let key = "timi.settings.v1"
     private let defaults: UserDefaults
 
-    private(set) var settings: AppSettings
+    @Published private(set) var settings: AppSettings
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults

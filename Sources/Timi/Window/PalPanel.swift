@@ -56,7 +56,7 @@ protocol PalViewDelegate: AnyObject {
     func palViewMouseDown(at screenPoint: NSPoint)
     func palViewMouseDragged(to screenPoint: NSPoint)
     func palViewMouseUp()
-    func palViewScrolled(deltaY: CGFloat, precise: Bool)
+    func palViewScrolled(deltaY: CGFloat, precise: Bool, gestureBegan: Bool)
 }
 
 /// Content view: hosts the glow + canvas layers and forwards mouse input.
@@ -142,7 +142,11 @@ final class PalView: NSView {
     }
 
     override func scrollWheel(with event: NSEvent) {
+        // Trackpad momentum would keep nudging the duration long after the
+        // fingers lift; only the gesture itself counts.
+        guard event.momentumPhase.isEmpty else { return }
         delegate?.palViewScrolled(deltaY: event.scrollingDeltaY,
-                                  precise: event.hasPreciseScrollingDeltas)
+                                  precise: event.hasPreciseScrollingDeltas,
+                                  gestureBegan: event.phase == .began)
     }
 }

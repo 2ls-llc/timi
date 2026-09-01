@@ -4,9 +4,16 @@ import TimiKit
 
 /// Completion notifications. UNUserNotificationCenter requires a real bundle,
 /// so everything is guarded — a bare `swift run` binary skips notifications.
-final class Notifier {
+final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private var available: Bool { Bundle.main.bundleIdentifier != nil }
     private var requested = false
+
+    override init() {
+        super.init()
+        if available {
+            UNUserNotificationCenter.current().delegate = self
+        }
+    }
 
     /// Called lazily the first time a timer starts.
     func requestPermissionIfNeeded(enabled: Bool) {
@@ -25,4 +32,20 @@ final class Notifier {
         UNUserNotificationCenter.current().add(request)
     }
 
+    /// Current authorization, delivered on the main thread (for the Settings pane).
+    func authorizationStatus(_ completion: @escaping (UNAuthorizationStatus) -> Void) {
+        guard available else { completion(.notDetermined); return }
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async { completion(settings.authorizationStatus) }
+        }
+    }
+
+    /// Banners are normally suppressed while the posting app is frontmost — which
+    /// Timi briefly is whenever Settings is open. Always present.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler:
+                                    @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list])
+    }
 }

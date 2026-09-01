@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import TimiKit
 
 /// Menu-bar presence: a pixel portrait of the active character (template when
@@ -64,6 +65,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         statusItem.button?.image = iconCache[key]
         statusItem.button?.imagePosition = .imageLeading
+        // Dimmed while Timi is hidden — the only visible cue that she's gone.
+        statusItem.button?.appearsDisabled = !settingsStore.settings.palVisible
+        statusItem.button?.setAccessibilityLabel("Timi")
+        statusItem.button?.setAccessibilityValue(controller.palView.axValue)
+    }
+
+    @objc private func showTips() {
+        if !settingsStore.settings.palVisible { controller.setPalVisible(true) }
+        controller.showFirstRunHint()
     }
 
     private func refreshTitle() {
@@ -137,14 +147,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .paused: primaryTitle = "Resume"
         case .done: primaryTitle = "Reset"
         }
-        let start = NSMenuItem(title: primaryTitle, action: #selector(tapAction), keyEquivalent: " ")
-        start.keyEquivalentModifierMask = [.control, .option]
+        let start = NSMenuItem(title: primaryTitle, action: #selector(tapAction), keyEquivalent: "")
+        // Mirrors the recorded hotkey, whatever it is (menus are built on the main thread).
+        MainActor.assumeIsolated { start.setShortcut(for: .togglePal) }
         start.target = self
         menu.addItem(start)
 
         let reset = NSMenuItem(title: "Reset", action: #selector(resetAction), keyEquivalent: "")
         reset.target = self
-        reset.isEnabled = mode != .idle
+        // In .done the primary item already reads "Reset" — don't offer two.
+        reset.isEnabled = mode == .running || mode == .paused
         menu.addItem(reset)
 
         menu.addItem(.separator())
@@ -176,7 +188,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         showHide.target = self
         menu.addItem(showHide)
 
-        let cabinet = NSMenuItem(title: "Cabinet Frame", action: #selector(toggleCabinet), keyEquivalent: "")
+        let cabinet = NSMenuItem(title: "Cabinet Frame (CRT Look)", action: #selector(toggleCabinet), keyEquivalent: "")
         cabinet.target = self
         cabinet.state = settingsStore.settings.cabinetFrame ? .on : .off
         menu.addItem(cabinet)
@@ -184,9 +196,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if Bundle.main.bundleIdentifier != nil {
             let login = NSMenuItem(title: "Launch at Login", action: #selector(toggleLogin), keyEquivalent: "")
             login.target = self
-            login.state = settingsStore.settings.launchAtLogin ? .on : .off
+            login.state = LoginItem.isEnabled ? .on : .off  // the system's truth, not a stored flag
             menu.addItem(login)
         }
+
+        let tips = NSMenuItem(title: "Show Tips", action: #selector(showTips), keyEquivalent: "")
+        tips.target = self
+        menu.addItem(tips)
 
         menu.addItem(.separator())
 
@@ -239,6 +255,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func togglePal() {
         controller.setPalVisible(!settingsStore.settings.palVisible)
+        refresh()
     }
 
     @objc private func toggleCabinet() {

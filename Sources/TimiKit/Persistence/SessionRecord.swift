@@ -6,13 +6,23 @@ public struct SessionRecord: Codable, Equatable, Sendable {
     public var durationMs: Double
     public var completed: Bool
     public var character: String
+    /// When the session finished. Hearts and streaks key on this (a session
+    /// started at 23:50 and finished at 00:15 belongs to the new day, matching
+    /// the heart the pal awards on screen). Optional for records written before
+    /// it existed — those fall back to `startedAt`.
+    public var completedAt: Date?
 
-    public init(startedAt: Date, durationMs: Double, completed: Bool, character: String) {
+    public init(startedAt: Date, durationMs: Double, completed: Bool, character: String,
+                completedAt: Date? = nil) {
         self.startedAt = startedAt
         self.durationMs = durationMs
         self.completed = completed
         self.character = character
+        self.completedAt = completedAt
     }
+
+    /// The day this session counts toward.
+    public var creditDate: Date { completedAt ?? startedAt }
 }
 
 /// Pure stats over session records — hearts today, lifetime, streak.
@@ -20,7 +30,7 @@ public enum SessionStats {
     /// Completed sessions since local midnight (the hearts row).
     public static func heartsToday(_ records: [SessionRecord], now: Date = Date(),
                                    calendar: Calendar = .current) -> Int {
-        records.lazy.filter { $0.completed && calendar.isDate($0.startedAt, inSameDayAs: now) }.count
+        records.lazy.filter { $0.completed && calendar.isDate($0.creditDate, inSameDayAs: now) }.count
     }
 
     public static func lifetimeCompleted(_ records: [SessionRecord]) -> Int {
@@ -32,7 +42,7 @@ public enum SessionStats {
     public static func streakDays(_ records: [SessionRecord], now: Date = Date(),
                                   calendar: Calendar = .current) -> Int {
         let days = Set(records.lazy.filter(\.completed)
-            .map { calendar.startOfDay(for: $0.startedAt) })
+            .map { calendar.startOfDay(for: $0.creditDate) })
         guard !days.isEmpty else { return 0 }
         var day = calendar.startOfDay(for: now)
         var streak = 0

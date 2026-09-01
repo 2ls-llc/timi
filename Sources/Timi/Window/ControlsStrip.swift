@@ -102,6 +102,7 @@ final class ControlsStrip: NSView {
         super.init(frame: frame)
         wantsLayer = true
         alphaValue = 0
+        isHidden = true  // out of the accessibility tree until first shown
         stack.orientation = .horizontal
         stack.spacing = 5
         stack.alignment = .centerY
@@ -153,6 +154,8 @@ final class ControlsStrip: NSView {
             b.isSelectedChip = selected
             b.onAction = action
             b.setAccessibilityLabel(accessibility)
+            // The prototype's `title=` tooltips — the icon chips have no text.
+            b.toolTip = accessibility.prefix(1).uppercased() + accessibility.dropFirst()
             return b
         }
 

@@ -154,8 +154,10 @@ final class PhysicsTests: XCTestCase {
 
     func testClampHomeMargins() {
         let clamped = Physics.clampHome(Vec2(-50, 2000), in: bounds)
-        XCTAssertEqual(clamped.x, 90)
-        XCTAssertEqual(clamped.y, 810)
+        XCTAssertEqual(clamped.x, 125, "sides keep the chip row on-screen")
+        XCTAssertEqual(clamped.y, 810, "top keeps the prototype's 90 pt")
+        let low = Physics.clampHome(Vec2(700, -10), in: bounds)
+        XCTAssertEqual(low.y, 120, "bottom keeps the strip above the Dock")
     }
 
     // MARK: - Engine pointer semantics (tap / pat / fling thresholds)
@@ -202,7 +204,7 @@ final class PhysicsTests: XCTestCase {
         e.pos = Vec2(30, 450) // dropped near the left edge
         e.vel = Vec2(100, 0)
         XCTAssertEqual(e.pointerUp(tMs: 1200), .settled)
-        XCTAssertEqual(e.home.x, 90, "home clamps 90 pt inside the screen")
+        XCTAssertEqual(e.home.x, Physics.homeSideMargin, "home clamps inside the screen")
         XCTAssertFalse(e.freeFlight)
     }
 
@@ -250,8 +252,8 @@ final class PhysicsTests: XCTestCase {
             remainingMs: 1_500_000, cursor: Vec2(0, 0), cursorMoved: false,
             hovered: false, reduceMotion: false, screen: bounds))
         XCTAssertFalse(e.freeFlight)
-        XCTAssertEqual(e.home.x, max(100 + 139.0 / 60 * exp(-1.5 / 60), 90), accuracy: 3)
-        XCTAssertEqual(e.home.y, 100, accuracy: 3)
+        XCTAssertEqual(e.home.x, Physics.homeSideMargin, accuracy: 3, "clamped in from x≈102")
+        XCTAssertEqual(e.home.y, Physics.homeBottomMargin, accuracy: 3, "clamped up from y=100")
     }
 
     func testWallImpactEmitsBoingAndSquash() {
