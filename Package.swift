@@ -29,5 +29,10 @@ let package = Package(
             dependencies: ["TimiKit"],
             path: "Tests/TimiKitTests"
         ),
+        .testTarget(
+            name: "TimiTests",
+            dependencies: ["Timi"],
+            path: "Tests/TimiTests"
+        ),
     ]
 )
