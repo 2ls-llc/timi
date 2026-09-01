@@ -154,6 +154,7 @@ final class ControlsStrip: NSView {
             b.isSelectedChip = selected
             b.onAction = action
             b.setAccessibilityLabel(accessibility)
+            if selected { b.setAccessibilityValue("selected") }
             // The prototype's `title=` tooltips — the icon chips have no text.
             b.toolTip = accessibility.prefix(1).uppercased() + accessibility.dropFirst()
             return b
@@ -161,7 +162,7 @@ final class ControlsStrip: NSView {
 
         let muted = controller.settings.muted
         let muteChip = chip("", symbol: muted ? "speaker.slash.fill" : "speaker.wave.2.fill",
-                            accessibility: "toggle sound") { [weak controller] in
+                            accessibility: muted ? "unmute sound" : "mute sound") { [weak controller] in
             controller?.toggleMute()
         }
 
@@ -205,6 +206,24 @@ final class ControlsStrip: NSView {
         stack.setFrameSize(stack.fittingSize)
         stack.setFrameOrigin(NSPoint(x: (bounds.width - stack.frame.width) / 2,
                                      y: (bounds.height - stack.frame.height) / 2))
+    }
+
+    /// Slide the chip row sideways when Timi rests near a screen edge, so no
+    /// chip ever hangs off-screen. Called each frame with global coordinates.
+    func keepChipsOnScreen(panelOriginX: CGFloat, screenMinX: CGFloat, screenMaxX: CGFloat) {
+        let pad: CGFloat = 8
+        let centeredX = (bounds.width - stack.frame.width) / 2
+        var x = centeredX
+        let globalLeft = panelOriginX + frame.origin.x + centeredX
+        let globalRight = globalLeft + stack.frame.width
+        if globalLeft < screenMinX + pad {
+            x += (screenMinX + pad) - globalLeft
+        } else if globalRight > screenMaxX - pad {
+            x -= globalRight - (screenMaxX - pad)
+        }
+        if abs(stack.frame.origin.x - x) > 0.5 {
+            stack.setFrameOrigin(NSPoint(x: x, y: stack.frame.origin.y))
+        }
     }
 
     /// Target-visible state — true from the moment a show is requested until a

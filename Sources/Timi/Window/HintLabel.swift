@@ -35,7 +35,7 @@ final class HintLabel: NSView {
         alphaValue = 0
         setAccessibilityElement(true)
         setAccessibilityRole(.staticText)
-        setAccessibilityLabel("Tap Timi to start, hold to pat, drag or fling her anywhere, scroll to change the time")
+        setAccessibilityLabel("Tap Timi to start, hold to pat, drag or fling her anywhere, hover for presets, scroll to set the minutes")
     }
 
     @available(*, unavailable)

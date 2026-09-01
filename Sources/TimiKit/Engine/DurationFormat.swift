@@ -33,12 +33,16 @@ public enum DurationFormat {
         return s == 0 ? "\(m)m" : "\(m):" + (s < 10 ? "0" : "") + "\(s)"
     }
 
-    /// Notification adjective: "25-minute", "30-second", "90-second".
+    /// Notification adjective: "25-minute", "30-second", "90-second" — and for
+    /// longer non-whole lengths, clock style ("12:30", never "750-second").
     public static func humanized(ms: Double) -> String {
         let seconds = Int((ms / 1000).rounded())
         if seconds % 60 == 0 {
             return "\(seconds / 60)-minute"
         }
-        return "\(seconds)-second"
+        if seconds < 120 {
+            return "\(seconds)-second"
+        }
+        return compact(ms: ms)
     }
 }

@@ -89,6 +89,7 @@ final class PalController: NSObject, PalViewDelegate {
         controlsStrip = strip
 
         palView.onAccessibilityPress = { [weak self] in self?.tapAction() }
+        palView.axActionsProvider = { [weak self] in self?.accessibilityActions() ?? [] }
         refreshAccessibility()
 
         updateGlowImage()
@@ -159,7 +160,13 @@ final class PalController: NSObject, PalViewDelegate {
         }
 
         // In hold-⌥ mode, chips that would not accept the click must not appear.
-        controlsStrip?.updateVisibility(hovered: hovered && interactive, mode: timer.mode, tMs: tMs)
+        // (Hover mode: `hovered` alone decides — the wide halo reveals the strip
+        // even though only the cat/chips consume clicks.)
+        let stripHover = settings.interactionMode == .hover ? hovered : (hovered && interactive)
+        controlsStrip?.updateVisibility(hovered: stripHover, mode: timer.mode, tMs: tMs)
+        controlsStrip?.keepChipsOnScreen(panelOriginX: panel.frame.origin.x,
+                                         screenMinX: screenRect.minX,
+                                         screenMaxX: screenRect.maxX)
         updateCadence(hovered: hovered, cursor: cursor, tMs: tMs)
         rememberPositionIfSettled(tMs: tMs)
 
@@ -174,6 +181,38 @@ final class PalController: NSObject, PalViewDelegate {
 
     private var lastAxSecond = -1
     private var lastAxMode: TimerMode = .idle
+
+    /// Everything the hover strip and menu offer, reachable from the cat herself
+    /// under VoiceOver (VO can't hover-reveal chips).
+    private func accessibilityActions() -> [NSAccessibilityCustomAction] {
+        func action(_ name: String, _ run: @escaping () -> Void) -> NSAccessibilityCustomAction {
+            NSAccessibilityCustomAction(name: name) { run(); return true }
+        }
+        var actions: [NSAccessibilityCustomAction] = []
+        switch timer.mode {
+        case .idle:
+            for preset in DurationPreset.all {
+                actions.append(action("Set timer to \(preset.menuTitle)") { [weak self] in
+                    self?.pickDuration(ms: preset.ms)
+                })
+            }
+            actions.append(action("Custom duration…") { [weak self] in
+                self?.promptCustomDuration()
+            })
+        case .running:
+            actions.append(action("Pause") { [weak self] in self?.tapAction() })
+            actions.append(action("Reset") { [weak self] in self?.resetAction() })
+        case .paused:
+            actions.append(action("Resume") { [weak self] in self?.tapAction() })
+            actions.append(action("Reset") { [weak self] in self?.resetAction() })
+        case .done:
+            actions.append(action("Reset") { [weak self] in self?.tapAction() })
+        }
+        actions.append(action(settings.muted ? "Unmute sound" : "Mute sound") { [weak self] in
+            self?.toggleMute()
+        })
+        return actions
+    }
 
     private func refreshAccessibility() {
         // The prototype's aria-label: "pixel cat timer".
@@ -252,13 +291,17 @@ final class PalController: NSObject, PalViewDelegate {
         // While the strip is shown, the chip row PLUS the gap up to the creature
         // counts as hovering — so traveling from the pal down to the presets
         // never drops hover mid-journey.
-        if let strip = controlsStrip, strip.isShown {
-            let chips = strip.chipRowFrameInPanel
-            let corridor = NSRect(x: chips.minX, y: chips.minY, width: chips.width,
-                                  height: PanelGeometry.creatureRect.minY - chips.minY + 4)
-            if corridor.contains(p) { return true }
-        }
+        if stripCorridorContains(p) { return true }
         return false
+    }
+
+    /// The chip row plus the gap up to the creature, while the strip is shown.
+    private func stripCorridorContains(_ p: NSPoint) -> Bool {
+        guard let strip = controlsStrip, strip.isShown else { return false }
+        let chips = strip.chipRowFrameInPanel
+        let corridor = NSRect(x: chips.minX, y: chips.minY, width: chips.width,
+                              height: PanelGeometry.creatureRect.minY - chips.minY + 4)
+        return corridor.contains(p)
     }
 
     /// Returns whether the panel currently accepts mouse input.
@@ -269,7 +312,12 @@ final class PalController: NSObject, PalViewDelegate {
             interactive = true
         } else {
             switch settings.interactionMode {
-            case .hover: interactive = hovered
+            case .hover:
+                // Tighter than `hovered`: the wide halo makes her *react*, but only
+                // the cat herself (plus the chips) may consume clicks and scrolls —
+                // everything else must reach the windows beneath.
+                let p = panelPoint(from: cursor)
+                interactive = PanelGeometry.creatureHitRect.contains(p) || stripCorridorContains(p)
             case .holdOption: interactive = NSEvent.modifierFlags.contains(.option)
             case .always: interactive = true
             }
@@ -321,7 +369,7 @@ final class PalController: NSObject, PalViewDelegate {
 
     func palViewMouseDown(at screenPoint: NSPoint) {
         let p = panelPoint(from: screenPoint)
-        guard PanelGeometry.creatureRect.contains(p) else { return }
+        guard PanelGeometry.creatureHitRect.contains(p) else { return }
         dismissHintIfNeeded()
         engine.pointerDown(at: Vec2(screenPoint.x, screenPoint.y), tMs: nowMs)
     }
@@ -483,23 +531,37 @@ final class PalController: NSObject, PalViewDelegate {
         onSessionStarted?()
     }
 
+    /// True while Timi can't be seen (hidden, screen locked, displays asleep —
+    /// all of which pause the display link). Disembodied ticks from an invisible
+    /// cat read as a bug, so ambient sounds stay quiet; the finish fanfare and
+    /// the notification are the alarm and still fire.
+    private var palOutOfSight: Bool {
+        (displayLink?.isPaused ?? false) || !settings.palVisible
+    }
+
     private func handleTimerEvents(_ events: [TimerEvent], tMs: Double) {
         for event in events {
             switch event {
             case .tick(let volume, let pitch):
-                sound.play(.tick(volume: volume, pitch: pitch))
+                if !palOutOfSight {
+                    sound.play(.tick(volume: volume, pitch: pitch))
+                }
             case .milestone(let m):
                 engine.onMilestone(m, tMs: tMs, reduceMotion: reduceMotion)
-                let moment: TimerSoundMoment = m == .half ? .half : m == .quarter ? .quarter : .minute
-                engine.config.sounds(for: moment).forEach { sound.play($0) }
+                if !palOutOfSight {
+                    let moment: TimerSoundMoment = m == .half ? .half : m == .quarter ? .quarter : .minute
+                    engine.config.sounds(for: moment).forEach { sound.play($0) }
+                }
             case .finished(let quiet):
                 engine.onFinish(tMs: tMs, reduceMotion: reduceMotion)
                 sound.play(.fanfare(volume: quiet ? 0.5 : 1))
                 cancelTickTimer()
                 scheduleAutoReset()
+                // The banner is for when the celebration can't be seen — someone
+                // watching the pounce doesn't need the same news twice.
                 notifier.notifyCompletion(characterName: engine.config.name,
                                           durationMs: timer.durationMs,
-                                          enabled: settings.notificationsEnabled)
+                                          enabled: settings.notificationsEnabled && palOutOfSight)
                 onSessionCompleted?()
             }
         }
@@ -636,7 +698,7 @@ extension PalController {
         while true {
             let alert = NSAlert()
             alert.messageText = "Custom Duration"
-            alert.informativeText = "Session length in minutes, 1–90. Decimals are fine (1.5 = 90 s)."
+            alert.informativeText = "Session length in minutes, 0.5–90. Decimals are fine (1.5 = 90 s)."
             alert.addButton(withTitle: "Set")
             alert.addButton(withTitle: "Cancel")
             let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 90, height: 24))
@@ -649,7 +711,8 @@ extension PalController {
             guard alert.runModal() == .alertFirstButtonReturn else { return }
             let text = field.stringValue.trimmingCharacters(in: .whitespaces)
                 .replacingOccurrences(of: ",", with: ".")
-            if let entered = Double(text), entered >= 1, entered <= 90 {
+            // Floor 0.5 — the dialog must accept the app's own 30 s preset.
+            if let entered = Double(text), entered >= 0.5, entered <= 90 {
                 pickDuration(ms: entered * 60_000)
                 return
             }
@@ -699,14 +762,25 @@ extension PalController {
         hint = label
         label.show()
         DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
-            self?.dismissHintIfNeeded()
+            // Timing out is not "seen": if nobody interacted (launch-at-login,
+            // user reading elsewhere), the tutorial comes back next launch.
+            self?.dismissHint(sawIt: false)
         }
     }
 
     func dismissHintIfNeeded() {
+        dismissHint(sawIt: true)
+    }
+
+    private func dismissHint(sawIt: Bool) {
         guard let label = hint else { return }
         hint = nil
         label.dismiss()
-        settingsStore.update { $0.hasSeenHint = true }
+        if sawIt {
+            settingsStore.update { $0.hasSeenHint = true }
+            // A calm, engaged moment — better than popping the permission dialog
+            // at the exact instant the first session starts.
+            notifier.requestPermissionIfNeeded(enabled: settings.notificationsEnabled)
+        }
     }
 }

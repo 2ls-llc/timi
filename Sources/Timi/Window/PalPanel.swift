@@ -10,11 +10,19 @@ enum PanelGeometry {
     /// The 56×48 canvas at 3 pt per logical pixel.
     static let canvasSize = NSSize(width: 168, height: 144)
     static let glowSize = NSSize(width: 260, height: 230)
-    /// Creature hit rect (the prototype's canvas hover area), panel coords.
+    /// Creature reaction halo (the prototype's canvas hover area), panel coords —
+    /// drives gaze, the hover scale, the strip reveal, and cadence.
     static var creatureRect: NSRect {
         NSRect(x: creatureCenter.x - canvasSize.width / 2,
                y: creatureCenter.y - canvasSize.height / 2,
                width: canvasSize.width, height: canvasSize.height)
+    }
+
+    /// Interactive hit area — tight around the drawn cat (~50×36 pt of sprite
+    /// plus grab slack), NOT the full halo. Clicks and scrolls outside this pass
+    /// through to whatever is beneath; the halo alone must never eat input.
+    static var creatureHitRect: NSRect {
+        creatureRect.insetBy(dx: 40, dy: 30)
     }
     /// Controls strip: top edge 84 pt below the creature center (prototype `top: 84`).
     static let stripHeight: CGFloat = 26
@@ -67,6 +75,9 @@ final class PalView: NSView {
     var axLabel: String = "Pixel cat timer"
     var axValue: String = ""
     var onAccessibilityPress: (() -> Void)?
+    /// Mode-appropriate VoiceOver actions (pause, reset, presets, sound…),
+    /// built fresh by the controller each time VoiceOver asks.
+    var axActionsProvider: (() -> [NSAccessibilityCustomAction])?
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .button }
@@ -75,6 +86,10 @@ final class PalView: NSView {
     override func accessibilityPerformPress() -> Bool {
         onAccessibilityPress?()
         return true
+    }
+
+    override func accessibilityCustomActions() -> [NSAccessibilityCustomAction]? {
+        axActionsProvider?()
     }
 
     let glowLayer = CALayer()

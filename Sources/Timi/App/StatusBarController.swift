@@ -202,6 +202,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         let tips = NSMenuItem(title: "Show Tips", action: #selector(showTips), keyEquivalent: "")
         tips.target = self
+        tips.isEnabled = mode == .idle  // the tips teach idle gestures (tap to start…)
         menu.addItem(tips)
 
         menu.addItem(.separator())
@@ -263,7 +264,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func toggleLogin() {
-        controller.setLaunchAtLogin(!settingsStore.settings.launchAtLogin)
+        // Toggle from the system's actual state, not the stored flag — they can
+        // disagree after edits in System Settings or a requires-approval limbo.
+        controller.setLaunchAtLogin(!LoginItem.isEnabled)
     }
 
     @objc private func showSettings() {

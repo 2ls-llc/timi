@@ -30,6 +30,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         hotkey = HotkeyManager { [weak self] in
             guard let self else { return }
+            // Never toggle an invisible timer: bring Timi back first so the
+            // press has a visible consequence.
+            if !self.controller.settings.palVisible {
+                self.controller.setPalVisible(true)
+            }
             self.controller.engine.noteInteraction(tMs: CACurrentMediaTime() * 1000)
             self.controller.tapAction()
             self.statusBar.refresh()

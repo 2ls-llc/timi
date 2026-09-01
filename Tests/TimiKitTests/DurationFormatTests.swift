@@ -19,6 +19,8 @@ final class DurationFormatTests: XCTestCase {
         XCTAssertEqual(DurationFormat.humanized(ms: 60_000), "1-minute")
         XCTAssertEqual(DurationFormat.humanized(ms: 30_000), "30-second")
         XCTAssertEqual(DurationFormat.humanized(ms: 90_000), "90-second")
+        XCTAssertEqual(DurationFormat.humanized(ms: 750_000), "12:30",
+                       "long non-whole lengths read as a clock, never '750-second'")
     }
 
     func testPresetsAreTheSingleSourceOfTruth() {

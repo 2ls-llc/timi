@@ -19,7 +19,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     func requestPermissionIfNeeded(enabled: Bool) {
         guard available, enabled, !requested else { return }
         requested = true
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        // Alert only — no notification ever carries a sound (the fanfare is the sound).
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
     }
 
     func notifyCompletion(characterName: String, durationMs: Double, enabled: Bool) {
