@@ -138,6 +138,13 @@ swift run Timi         # run without a bundle (notifications/login disabled)
 (`/tmp/timi/cmd`) used to script and screenshot the app during development —
 see `Sources/Timi/App/DebugHarness.swift`.
 
+**Building requires full Xcode** (15.4 or newer), not just the Command Line
+Tools: a dependency uses SwiftUI `#Preview` macros, whose compiler plugin ships
+inside Xcode.app. If you see *"external macro implementation type
+'PreviewsMacros.SwiftUIView' could not be found"*, run
+`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` (installing
+Xcode first if needed) and build again.
+
 Release packaging:
 
 ```sh

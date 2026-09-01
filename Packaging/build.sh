@@ -11,6 +11,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Building needs FULL Xcode, not just Command Line Tools: a dependency uses
+# SwiftUI #Preview macros, whose compiler plugin ships inside Xcode.app.
+if ! xcode-select -p 2>/dev/null | grep -q "Xcode.*\.app"; then
+  echo "error: full Xcode is required (xcode-select currently points at:"
+  echo "       $(xcode-select -p 2>/dev/null || echo '<nothing>'))."
+  echo "       Install Xcode, then: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+  exit 1
+fi
+
 VERSION="${VERSION:-0.1.0}"
 IDENTITY="${CODESIGN_IDENTITY:--}"
 APP=dist/Timi.app
