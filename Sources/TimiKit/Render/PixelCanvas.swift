@@ -83,6 +83,39 @@ public struct PixelCanvas {
         }
     }
 
+    /// Sticker-style outline pass: every transparent pixel that touches an
+    /// opaque pixel (8-neighborhood) is painted `color`. Keeps pixel purity
+    /// while making the cream cat readable on light desktops — nearly invisible
+    /// over dark wallpapers, transformative over light ones.
+    public mutating func outline(_ color: RGBA) {
+        let w = Self.width, h = Self.height
+        // Snapshot which pixels are opaque before we start painting.
+        var opaque = [Bool](repeating: false, count: w * h)
+        for i in 0..<(w * h) {
+            opaque[i] = buffer[i * 4 + 3] > 0
+        }
+        for y in 0..<h {
+            for x in 0..<w where !opaque[y * w + x] {
+                var touches = false
+                for dy in -1...1 {
+                    for dx in -1...1 where !(dx == 0 && dy == 0) {
+                        let nx = x + dx, ny = y + dy
+                        if nx >= 0, nx < w, ny >= 0, ny < h, opaque[ny * w + nx] {
+                            touches = true
+                        }
+                    }
+                }
+                if touches {
+                    let i = (y * w + x) * 4
+                    buffer[i] = color.r
+                    buffer[i + 1] = color.g
+                    buffer[i + 2] = color.b
+                    buffer[i + 3] = color.a
+                }
+            }
+        }
+    }
+
     /// Color at (x, y) — for tests.
     public func pixel(_ x: Int, _ y: Int) -> RGBA {
         let i = (y * Self.width + x) * 4

@@ -51,6 +51,13 @@ public enum Renderer {
         // the cat
         drawTimi(into: &canvas, engine: e)
 
+        // High-contrast outline around everything drawn so far (creature, tail,
+        // clock, hearts, bar). Particles stay outline-free — they're ephemeral
+        // sparkle and read fine as bare pixels.
+        if e.outlineEnabled {
+            canvas.outline(RGBA(r: 0x12, g: 0x0E, b: 0x08, a: 210))
+        }
+
         // particles above the cat
         for z in e.zs {
             canvas.sprite(Sprites.ZGLYPH, jsRound(z.x), jsRound(z.y), pal.cyan)

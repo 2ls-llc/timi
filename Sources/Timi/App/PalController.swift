@@ -90,6 +90,7 @@ final class PalController: NSObject, PalViewDelegate {
         sound.setMuted(settings.muted)
         sound.setVolume(settings.volume)
         applyCabinetLook()
+        applyOutlineSetting()
         if settings.palVisible {
             panel.orderFrontRegardless()
         }
@@ -237,8 +238,15 @@ final class PalController: NSObject, PalViewDelegate {
         if let forced = debugHoverOverride { return forced }
         let p = panelPoint(from: cursor)
         if PanelGeometry.creatureRect.contains(p) { return true }
-        if let strip = controlsStrip, !strip.isHidden, strip.alphaValue > 0.01,
-           strip.chipRowFrameInPanel.contains(p) { return true }
+        // While the strip is shown, the chip row PLUS the gap up to the creature
+        // counts as hovering — so traveling from the pal down to the presets
+        // never drops hover mid-journey.
+        if let strip = controlsStrip, strip.isShown {
+            let chips = strip.chipRowFrameInPanel
+            let corridor = NSRect(x: chips.minX, y: chips.minY, width: chips.width,
+                                  height: PanelGeometry.creatureRect.minY - chips.minY + 4)
+            if corridor.contains(p) { return true }
+        }
         return false
     }
 
@@ -408,6 +416,17 @@ final class PalController: NSObject, PalViewDelegate {
     func setCabinet(_ on: Bool) {
         settingsStore.update { $0.cabinetFrame = on }
         applyCabinetLook()
+    }
+
+    func setHighContrastOutline(_ on: Bool) {
+        settingsStore.update { $0.highContrastOutline = on }
+        applyOutlineSetting()
+    }
+
+    /// The user's toggle, or forced on by the system's Increase Contrast.
+    func applyOutlineSetting() {
+        engine.outlineEnabled = settings.outlineOn ||
+            NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
     }
 
     private func applyCabinetLook() {

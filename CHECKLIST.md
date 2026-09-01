@@ -120,7 +120,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 12.2 Snapshot evidence: 13 deterministic goldens (idle, running-hidden-clock, done-banner, held, wall-impact, pat, sad, bored-loaf, nap, hunt-crouch, wiggle, zoomies, loaf — the hunt covers "panic", the nap covers "sleeping") + live PNGs; 1× and 3× crispness (2× display: 6 device px per cell by construction)
 - [x] 12.3 Tap during hop/bounce counts (T)
 - [x] 12.4 Timer ±50 ms over 90 min incl. sleep/wake (T: exact wall-clock arithmetic)
-- [x] 12.5 Reduce Motion (T); VoiceOver: pal is a labeled button with live value, chips labeled; Increase Contrast: not implemented (spec marks it optional)
+- [x] 12.5 Reduce Motion (T); VoiceOver: pal is a labeled button with live value, chips labeled; Increase Contrast: 1 px sticker outline (default on, Settings toggle, forced on by the system setting) — verified in goldens on white
 - [x] 12.6 Non-activating panel; LSUIElement (no Dock/Cmd-Tab)
 
 ## §13 Process

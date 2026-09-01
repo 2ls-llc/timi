@@ -58,6 +58,9 @@ struct SettingsView: View {
             Section("Appearance") {
                 Toggle("Cabinet frame (CRT look)", isOn: binding({ controller.settings.cabinetFrame },
                                                                  { controller.setCabinet($0) }))
+                Toggle("Outline (helps on light backgrounds)",
+                       isOn: binding({ controller.settings.outlineOn },
+                                     { controller.setHighContrastOutline($0) }))
             }
 
             Section("Notifications") {

@@ -97,7 +97,6 @@ final class ControlsStrip: NSView {
     }
 
     private let stack = NSStackView()
-    private var visible = false
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -116,10 +115,13 @@ final class ControlsStrip: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     /// The prototype hides the strip with `pointerEvents: "none"` alongside the
-    /// opacity fade — an invisible strip must never swallow clicks. Also restrict
-    /// hits to the actual chip row, not the panel-wide layout band.
+    /// opacity fade — a hidden strip must never swallow clicks. Gate on the
+    /// target-visible state (`isShown`), NOT the model alphaValue: the animator
+    /// snaps the model value to the fade target immediately, which would make
+    /// the strip untouchable the instant a fade-out starts. Also restrict hits
+    /// to the actual chip row, not the panel-wide layout band.
     override func hitTest(_ point: NSPoint) -> NSView? {
-        guard alphaValue > 0.01 else { return nil }
+        guard isShown else { return nil }
         let local = convert(point, from: superview)
         guard stack.frame.insetBy(dx: -4, dy: -4).contains(local) else { return nil }
         return super.hitTest(point)
@@ -193,17 +195,28 @@ final class ControlsStrip: NSView {
                                      y: (bounds.height - stack.frame.height) / 2))
     }
 
+    /// Target-visible state — true from the moment a show is requested until a
+    /// hide fade begins. The hover/click-through logic keys off this.
+    private(set) var isShown = false
+    private var lastWantedShownAt = -1e9
+
     /// Prototype `showControls`: idle & paused always show (native: idle shows on
     /// hover), running shows on hover, done hides. Paused pins the strip visible.
+    /// A 400 ms grace keeps it open while the cursor travels from the creature
+    /// down across the gap to the chips — without it the strip starts fading the
+    /// frame the cursor leaves the creature and the presets are unreachable.
     func updateVisibility(hovered: Bool, mode: TimerMode, tMs: Double) {
-        let show: Bool
+        let want: Bool
         switch mode {
-        case .paused: show = true
-        case .idle, .running: show = hovered
-        case .done: show = false
+        case .paused: want = true
+        case .idle, .running: want = hovered
+        case .done: want = false
         }
-        guard show != visible else { return }
-        visible = show
+        if want { lastWantedShownAt = tMs }
+        let inGrace = tMs - lastWantedShownAt < 400
+        let show = want || (isShown && inGrace && mode != .done)
+        guard show != isShown else { return }
+        isShown = show
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.3
             animator().alphaValue = show ? 1 : 0

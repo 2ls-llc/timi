@@ -173,6 +173,10 @@ public final class PalEngine {
     var finishMewAt = Double.infinity
     var pendingHeartLand = false
 
+    /// High-contrast outline for light desktops (setting; also forced on by the
+    /// system's Increase Contrast). Read by the renderer.
+    public var outlineEnabled = true
+
     // Latest inputs (kept for pointerUp, which needs screen bounds)
     public private(set) var screen = Rect(x: 0, y: 0, w: 1440, h: 900)
     public private(set) var mode: TimerMode = .idle

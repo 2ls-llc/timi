@@ -23,6 +23,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
     /// Last resting position per screen identifier (display UUID) — [x, y] in
     /// global AppKit coordinates. Optional so older stored settings still decode.
     public var lastPositionPerScreen: [String: [Double]]? = nil
+    /// 1 px dark sticker outline for legibility on light desktops. Optional so
+    /// older stored settings still decode; read via `outlineOn` (default true).
+    public var highContrastOutline: Bool? = nil
+
+    public var outlineOn: Bool { highContrastOutline ?? true }
 
     public init() {}
 }
