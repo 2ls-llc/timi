@@ -65,7 +65,8 @@ git clone https://github.com/2ls/timi && cd timi
 - **Hold** (≥ half a second, without moving): pat. Never touches the timer.
 - **Drag / fling** anywhere. She settles where you drop her, or bounces if flung.
 - **Scroll** over her while idle: ±1 minute (1–90).
-- **Hover** reveals the controls strip: presets `30s · 5m · 15m · 25m` + mute
+- **Hover** reveals the controls strip: presets `30s · 5m · 15m · 25m`, a `…`
+  chip for any custom length (it then shows your choice, e.g. `12M`), and mute
   while idle; pause/resume · mute · reset while running (pinned while paused).
 - **⌃⌥Space** starts/pauses from anywhere (configurable in Settings).
 - The **menu bar** cat (template when idle, tinted while running) carries the

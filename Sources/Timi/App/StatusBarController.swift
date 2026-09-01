@@ -229,20 +229,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func customDuration() {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = "Custom Duration"
-        alert.informativeText = "Focus session length in minutes (1–90)."
-        alert.addButton(withTitle: "Set")
-        alert.addButton(withTitle: "Cancel")
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 90, height: 24))
-        field.placeholderString = "25"
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn,
-              let minutes = Double(field.stringValue.trimmingCharacters(in: .whitespaces)),
-              minutes > 0 else { return }
-        controller.pickDuration(ms: clamp(minutes, 1, 90) * 60_000)
+        controller.promptCustomDuration()
     }
 
     @objc private func toggleSound() {

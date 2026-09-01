@@ -598,3 +598,29 @@ final class PalController: NSObject, PalViewDelegate {
         }
     }
 }
+
+// MARK: - Custom duration dialog (menu "Custom…" and the strip's "…" chip)
+
+extension PalController {
+    func promptCustomDuration() {
+        guard timer.mode == .idle else { return }
+        engine.noteInteraction(tMs: CACurrentMediaTime() * 1000)
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "Custom Duration"
+        alert.informativeText = "Focus session length in minutes (1–90)."
+        alert.addButton(withTitle: "Set")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 90, height: 24))
+        let minutes = timer.durationMs / 60_000
+        field.stringValue = minutes == minutes.rounded()
+            ? "\(Int(minutes))" : String(format: "%.1f", minutes)
+        field.placeholderString = "25"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn,
+              let entered = Double(field.stringValue.trimmingCharacters(in: .whitespaces)),
+              entered > 0 else { return }
+        pickDuration(ms: clamp(entered, 1, 90) * 60_000)
+    }
+}

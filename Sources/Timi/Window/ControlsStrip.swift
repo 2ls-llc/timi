@@ -136,6 +136,13 @@ final class ControlsStrip: NSView {
 
     private var mode: TimerMode { controller?.timer.mode ?? .idle }
 
+    /// Chip label for a custom duration: "12m", or "1:30" when not whole minutes.
+    static func compactLabel(ms: Double) -> String {
+        let totalSeconds = Int((ms / 1000).rounded())
+        let m = totalSeconds / 60, s = totalSeconds % 60
+        return s == 0 ? "\(m)m" : "\(m):" + (s < 10 ? "0" : "") + "\(s)"
+    }
+
     func modeChanged() { rebuild() }
     func refreshChips() { rebuild() }
 
@@ -172,6 +179,17 @@ final class ControlsStrip: NSView {
                         controller?.pickDuration(ms: ms)
                     })
             }
+            // "…" opens the custom-duration dialog; when a custom length is set
+            // the chip shows it (e.g. 12M, 1:30) and takes the selected style.
+            let presets: [Double] = [30_000, 300_000, 900_000, 1_500_000]
+            let currentMs = controller.timer.durationMs
+            let isCustom = !presets.contains(currentMs)
+            stack.addArrangedSubview(chip(
+                isCustom ? Self.compactLabel(ms: currentMs) : "…",
+                selected: isCustom,
+                accessibility: "custom duration") { [weak controller] in
+                    controller?.promptCustomDuration()
+                })
             stack.addArrangedSubview(muteChip)
         case .running, .paused:
             let running = mode == .running
