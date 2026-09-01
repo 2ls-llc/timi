@@ -2,8 +2,10 @@ import Foundation
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-    /// Start/Pause toggle — default ⌃⌥Space, user-configurable in Settings.
-    static let togglePal = Self("togglePal", default: .init(.space, modifiers: [.control, .option]))
+    /// Start/Pause toggle — default ⌃⌥T, user-configurable in Settings.
+    /// (⌃⌥Space is macOS's own "select next input source" shortcut, so it was
+    /// swallowed for anyone with two keyboard layouts enabled.)
+    static let togglePal = Self("togglePal", default: .init(.t, modifiers: [.control, .option]))
 }
 
 final class HotkeyManager {

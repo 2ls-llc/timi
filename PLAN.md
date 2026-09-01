@@ -112,7 +112,7 @@ layer (anchor at center), never to the bitmap — pixels stay integer-scaled at 
 | `wheel` handler | `scrollWheel(with:)` over the pal, idle only | notch detection via `scrollingDeltaY` accumulation |
 | container `ResizeObserver` | `didChangeScreenParametersNotification` | clamp `home` on-screen; per-screen last position remembered |
 | buttons row | `ControlsStrip` NSView with chip-style buttons | fade 300 ms, hover-revealed (native adaptation) |
-| keyboard space/R/M | global hotkey (⌃⌥Space) + menu key equivalents | app is LSUIElement; no window focus, so web keys become hotkey + menu |
+| keyboard space/R/M | global hotkey (⌃⌥T; was ⌃⌥Space, which macOS reserves for input-source switching) + menu key equivalents | app is LSUIElement; no window focus, so web keys become hotkey + menu |
 
 ## 4. Engine architecture
 

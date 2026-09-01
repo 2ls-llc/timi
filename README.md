@@ -68,7 +68,7 @@ git clone https://github.com/2ls/timi && cd timi
 - **Hover** reveals the controls strip: presets `30s · 5m · 15m · 25m`, a `…`
   chip for any custom length (it then shows your choice, e.g. `12M`), and mute
   while idle; pause/resume · mute · reset while running (pinned while paused).
-- **⌃⌥Space** starts/pauses from anywhere (configurable in Settings).
+- **⌃⌥T** starts/pauses from anywhere (configurable in Settings).
 - The **menu bar** cat (template when idle, tinted while running) carries the
   whole menu: presets, Custom…, sound, show/hide, cabinet frame, launch at
   login, hearts + streak, Settings.

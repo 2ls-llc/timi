@@ -101,8 +101,8 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 
 ## §10 Menu bar, hotkeys, settings, persistence
 - [x] 10.1 NSStatusItem pixel portrait (template idle / tinted running) + optional mm:ss
-- [x] 10.2 Menu: Start/Pause ⌃⌥Space, Reset, presets, Custom…, Character ▸, Sound, Show/Hide, Cabinet, Launch at Login, hearts+streak line, Settings…, Quit
-- [x] 10.3 KeyboardShortcuts global hotkey, default ⌃⌥Space, recorder in Settings
+- [x] 10.2 Menu: Start/Pause (mirrors the recorded hotkey), Reset, presets, Custom…, ~~Character ▸~~, Sound, Show/Hide, Cabinet, Launch at Login, Show Tips, hearts+streak line, Settings…, Quit
+- [x] 10.3 KeyboardShortcuts global hotkey, default ⌃⌥T (spec said ⌃⌥Space — changed at the owner's direction: it collides with macOS input-source switching), recorder in Settings
 - [x] 10.4 SwiftUI Settings: all specified controls + About (smoke-tested layout)
 - [x] 10.5 UserDefaults settings; sessions.json {startedAt, durationMs, completed, character}; hearts today; lifetime+streak (L: verified file contents + relaunch restore)
 - [x] 10.6 Completion notification; lazy permission at first start (bundle-gated)
