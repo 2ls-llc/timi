@@ -27,7 +27,7 @@ public enum AdvanceContext: Sendable {
 public final class TimerCore {
     public static let minDurationMs: Double = 60_000
     public static let maxDurationMs: Double = 90 * 60_000
-    public static let presetsMs: [Double] = [30_000, 300_000, 900_000, 1_500_000]
+    public static var presetsMs: [Double] { DurationPreset.all.map(\.ms) }
     public static let defaultDurationMs: Double = 1_500_000
 
     public private(set) var mode: TimerMode = .idle

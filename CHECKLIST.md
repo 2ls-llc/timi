@@ -129,7 +129,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 13.3 Milestone commits M1–M7
 - [x] 13.4 Build+test+launch+snapshot evidence per milestone
 - [x] 13.5 No extra features; no simplified behaviors (adversarial review confirmed; 4 fixes applied)
-- [x] 13.6 clone && ./Packaging/build.sh → Timi.app (verified end-to-end incl. launch); swift test green (86); README complete
+- [x] 13.6 clone && ./Packaging/build.sh → Timi.app (verified end-to-end incl. launch); swift test green (106); README complete
 
 ### Not machine-verifiable in this environment (honest notes)
 - Real-desktop screenshots blocked by Screen Recording TCC; layer-tree self-captures

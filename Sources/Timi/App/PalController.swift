@@ -7,7 +7,7 @@ protocol SoundSink: AnyObject {
     func setVolume(_ volume: Double)
 }
 
-/// Placeholder sink until ChipSynth lands (M3).
+/// Silent sink — in place only until the app wires up ChipSynth at launch.
 final class NullSoundSink: SoundSink {
     func play(_ sound: PalSound) {}
     func setMuted(_ muted: Bool) {}
@@ -93,6 +93,7 @@ final class PalController: NSObject, PalViewDelegate {
         applyOutlineSetting()
         if settings.palVisible {
             panel.orderFrontRegardless()
+            if settings.hasSeenHint != true { showFirstRunHint() }
         }
         let link = palView.displayLink(target: self, selector: #selector(frameTick(_:)))
         link.add(to: .main, forMode: .common)
@@ -308,6 +309,7 @@ final class PalController: NSObject, PalViewDelegate {
     func palViewMouseDown(at screenPoint: NSPoint) {
         let p = panelPoint(from: screenPoint)
         guard PanelGeometry.creatureRect.contains(p) else { return }
+        dismissHintIfNeeded()
         engine.pointerDown(at: Vec2(screenPoint.x, screenPoint.y), tMs: nowMs)
     }
 
@@ -354,6 +356,7 @@ final class PalController: NSObject, PalViewDelegate {
 
     func tapAction() {
         let tMs = nowMs
+        dismissHintIfNeeded()
         engine.noteInteraction(tMs: tMs)
         switch timer.tap(now: Date()) {
         case .started:
@@ -622,5 +625,38 @@ extension PalController {
               let entered = Double(field.stringValue.trimmingCharacters(in: .whitespaces)),
               entered > 0 else { return }
         pickDuration(ms: clamp(entered, 1, 90) * 60_000)
+    }
+}
+
+// MARK: - First-run hint
+
+extension PalController {
+    private static var hintKey: UInt8 = 0
+    private var hint: HintLabel? {
+        get { objc_getAssociatedObject(self, &Self.hintKey) as? HintLabel }
+        set { objc_setAssociatedObject(self, &Self.hintKey, newValue, .OBJC_ASSOCIATION_RETAIN) }
+    }
+
+    /// The prototype's footer instructions, shown once above the cat until the
+    /// first interaction (or 15 s, whichever comes first).
+    func showFirstRunHint() {
+        guard hint == nil else { return }
+        let label = HintLabel(tint: engine.config.palette.primary)
+        let creature = PanelGeometry.creatureRect
+        label.frame.origin = NSPoint(x: (PanelGeometry.size.width - label.frame.width) / 2,
+                                     y: creature.maxY + 4)
+        palView.addSubview(label)
+        hint = label
+        label.show()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            self?.dismissHintIfNeeded()
+        }
+    }
+
+    func dismissHintIfNeeded() {
+        guard let label = hint else { return }
+        hint = nil
+        label.dismiss()
+        settingsStore.update { $0.hasSeenHint = true }
     }
 }

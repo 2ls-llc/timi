@@ -18,18 +18,11 @@ final class Notifier {
     func notifyCompletion(characterName: String, durationMs: Double, enabled: Bool) {
         guard available, enabled else { return }
         let content = UNMutableNotificationContent()
-        content.title = "\(characterName) finished a \(Self.humanize(durationMs)) session 🎉"
+        content.title = "\(characterName) finished a \(DurationFormat.humanized(ms: durationMs)) session 🎉"
         content.body = "Time for a break."
         let request = UNNotificationRequest(identifier: UUID().uuidString,
                                             content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
     }
 
-    static func humanize(_ ms: Double) -> String {
-        let seconds = Int(ms / 1000)
-        if seconds % 60 == 0 {
-            return "\(seconds / 60)-minute"
-        }
-        return "\(seconds)-second"
-    }
 }

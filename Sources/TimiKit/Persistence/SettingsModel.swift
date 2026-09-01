@@ -28,6 +28,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var highContrastOutline: Bool? = nil
 
     public var outlineOn: Bool { highContrastOutline ?? true }
+    /// Set once the first-run hint has been shown and dismissed.
+    public var hasSeenHint: Bool? = nil
 
     public init() {}
 }

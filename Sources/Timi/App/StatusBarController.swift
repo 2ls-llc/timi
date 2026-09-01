@@ -71,7 +71,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let mode = controller.timer.mode
         if settingsStore.settings.showMenuBarClock, mode == .running || mode == .paused {
             let rem = controller.timer.remainingMs(now: Date())
-            button.title = " " + formatMillis(rem)
+            button.title = (mode == .paused ? " ⏸ " : " ") + formatMillis(rem)
             button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         } else {
             button.title = ""
@@ -149,12 +149,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        for (label, ms) in [("30 seconds", 30_000.0), ("5 minutes", 300_000.0),
-                            ("15 minutes", 900_000.0), ("25 minutes", 1_500_000.0)] {
-            let item = NSMenuItem(title: label, action: #selector(pickPreset(_:)), keyEquivalent: "")
+        for preset in DurationPreset.all {
+            let item = NSMenuItem(title: preset.menuTitle, action: #selector(pickPreset(_:)),
+                                  keyEquivalent: "")
             item.target = self
-            item.representedObject = ms
-            item.state = controller.timer.durationMs == ms ? .on : .off
+            item.representedObject = preset.ms
+            item.state = controller.timer.durationMs == preset.ms ? .on : .off
             item.isEnabled = mode == .idle
             menu.addItem(item)
         }

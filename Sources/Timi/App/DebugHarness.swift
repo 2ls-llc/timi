@@ -104,6 +104,8 @@ final class DebugHarness {
             controller.setCabinet(parts.count > 1 && parts[1] == "on")
         case "settings":
             (NSApp.delegate as? AppDelegate)?.showSettingsForDebug()
+        case "hint":
+            controller.showFirstRunHint()
         case "state":
             let e = controller.engine
             let info = "mode=\(controller.timer.mode.rawValue) pos=\(Int(e.pos.x)),\(Int(e.pos.y)) " +

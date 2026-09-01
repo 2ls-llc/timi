@@ -136,13 +136,6 @@ final class ControlsStrip: NSView {
 
     private var mode: TimerMode { controller?.timer.mode ?? .idle }
 
-    /// Chip label for a custom duration: "12m", or "1:30" when not whole minutes.
-    static func compactLabel(ms: Double) -> String {
-        let totalSeconds = Int((ms / 1000).rounded())
-        let m = totalSeconds / 60, s = totalSeconds % 60
-        return s == 0 ? "\(m)m" : "\(m):" + (s < 10 ? "0" : "") + "\(s)"
-    }
-
     func modeChanged() { rebuild() }
     func refreshChips() { rebuild() }
 
@@ -171,21 +164,19 @@ final class ControlsStrip: NSView {
 
         switch mode {
         case .idle:
-            for (label, ms) in [("30s", 30_000.0), ("5m", 300_000.0),
-                                ("15m", 900_000.0), ("25m", 1_500_000.0)] {
+            for preset in DurationPreset.all {
                 stack.addArrangedSubview(chip(
-                    label, selected: controller.timer.durationMs == ms,
-                    accessibility: "set timer to \(label)") { [weak controller] in
-                        controller?.pickDuration(ms: ms)
+                    preset.chipLabel, selected: controller.timer.durationMs == preset.ms,
+                    accessibility: "set timer to \(preset.menuTitle)") { [weak controller] in
+                        controller?.pickDuration(ms: preset.ms)
                     })
             }
             // "…" opens the custom-duration dialog; when a custom length is set
             // the chip shows it (e.g. 12M, 1:30) and takes the selected style.
-            let presets: [Double] = [30_000, 300_000, 900_000, 1_500_000]
             let currentMs = controller.timer.durationMs
-            let isCustom = !presets.contains(currentMs)
+            let isCustom = !DurationPreset.isPreset(currentMs)
             stack.addArrangedSubview(chip(
-                isCustom ? Self.compactLabel(ms: currentMs) : "…",
+                isCustom ? DurationFormat.compact(ms: currentMs) : "…",
                 selected: isCustom,
                 accessibility: "custom duration") { [weak controller] in
                     controller?.promptCustomDuration()
@@ -235,10 +226,16 @@ final class ControlsStrip: NSView {
         let show = want || (isShown && inGrace && mode != .done)
         guard show != isShown else { return }
         isShown = show
-        NSAnimationContext.runAnimationGroup { ctx in
+        if show { isHidden = false }
+        NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.3
-            animator().alphaValue = show ? 1 : 0
-        }
+            self.animator().alphaValue = show ? 1 : 0
+        }, completionHandler: { [weak self] in
+            // Fully faded: drop out of the view/accessibility tree so VoiceOver
+            // never lands on invisible chips (a later show un-hides first).
+            guard let self, !self.isShown else { return }
+            self.isHidden = true
+        })
     }
 }
 
