@@ -51,7 +51,10 @@ cp Packaging/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
 
 echo "==> codesign ($IDENTITY)"
-codesign --force --options runtime \
+# Notarization requires a secure timestamp; ad-hoc signing can't produce one.
+TIMESTAMP_FLAG=""
+[ "$IDENTITY" != "-" ] && TIMESTAMP_FLAG="--timestamp"
+codesign --force --options runtime $TIMESTAMP_FLAG \
   --entitlements Packaging/Timi.entitlements \
   --sign "$IDENTITY" "$APP"
 
