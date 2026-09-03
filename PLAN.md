@@ -184,19 +184,26 @@ since both files are identical there (modulo palette + pop color + flash alpha 0
 15. **Pat sound:** Pip plays `pat` on release; Mochi's file plays no release sound — its
     purr loop starts via `purring` (patT) and repeats every 1450 ms while purring ≤1500 ms.
     Reproduced exactly (one purr per pat, effectively).
-16. **Mochi kneading** requires `happy && !walking && mode == idle` — happens in the ~3.6 s
+16. **Kneading** requires `happy && !walking && mode == idle` — happens in the ~3.6 s
     idle window after auto-reset (happyUntil outlives done). Kept.
 17. **RNG:** all `Math.random()` sites use an injected seeded generator; the app seeds from
     entropy, tests fix the seed.
 18. **`fmt`** = `ceil(ms/1000)` → `m:ss`, identical.
-19. **Hearts flight target slot** = `min(hearts, 7)`; on landing `hearts += 1` + blip. With
-    persisted hearts ≥ 8 the row stays at 8 (`min(hearts,8)`), like the prototype.
+19. **Hearts flight target** = the ♥ tally glyph at (4, 4) (the prototype aimed at
+    the next row slot); on landing `hearts += 1` + blip + a 130 ms segPop-style
+    flash of the glyph (`heartPopT`), so the count ticks as the heart thumps in —
+    coin-to-counter juice.
 20. **Menu-bar icon**: 1-bit mini portrait of the active character; `isTemplate` when idle,
     colored when running; optional `12:34` text next to it (setting).
-21. **Hearts row at y=8** (owner-reported fix): the prototype draws hearts and the
-    centered clock in the same y=2 band and lets the digits overwrite hearts 4+ —
-    invisible there because web hearts reset per page load. Native hearts persist
-    per day, so the row moved one band down (flyHeart lands at y=9 to match).
+21. **♥×n tally + one-line HUD** (owner-directed): the prototype draws one heart
+    sprite per completion and the clock centered, both at y=2 — fine on the web
+    where hearts reset per page load, but native hearts persist per day, so the
+    row collided with the digits at 4 hearts and silently capped at 8. Replaced
+    with an arcade HUD on a single y=2 line: a `♥×n` tally top-left (heart sprite,
+    3×3 × glyph, count to 99, pink) and the clock right-aligned ending at x=53
+    (2 px margins both sides). Worst case (`♥×99` vs `480:00`) leaves 14 px of
+    air; the centered done banner clears both. Tally idiom over pips: hearts are
+    unbounded accumulation (coins/score), not bounded capacity (health).
 22. **Resting-spot insets** (refinement pass): the prototype clamps `home` 90 pt inside its
     container on every side. Natively the hover strip hangs 110 pt below the creature
     and its chip row is ~235 pt wide, so the bottom inset is 120 pt and the sides 125 pt

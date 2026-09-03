@@ -33,8 +33,8 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 3.3 Click-through default; cursor-over-creature/strip enables input (display-link cadence ≥12 Hz, 60 Hz when near); hold-⌥ mode; always mode
 - [x] 3.4 Position driven by physics via setFrameOrigin; drag feeds cursor into 380/26 spring (T,L)
 - [x] 3.5 Wall bounds = visibleFrame of current screen; didChangeScreenParameters clamps home (L)
-- [x] 3.6 Bare creature + breathing glow 0.35–0.65 (×0.45 asleep); no CRT by default; Cabinet optional (L: m4-cabinet.png)
-- [x] 3.7 Controls strip: hover-revealed, 300 ms fade, presets+mute idle / pause-mute-reset running, pinned while paused, filled selected chip, chip typography (L: m2-strip-idle.png, m3-paused-strip.png)
+- [x] 3.6 Bare creature + breathing glow 0.35–0.65 (×0.45 asleep); no CRT by default; Cabinet optional (L: cabinet-on.png)
+- [x] 3.7 Controls strip: hover-revealed, 300 ms fade, presets+mute idle / pause-mute-reset running, pinned while paused, filled selected chip, chip typography (L: hero-hover.png, strip-paused.png)
 - [x] 3.8 Scroll over pal while idle: ±1 min/notch, 1–90 min, blip (T,L: 25:00→27:00)
 
 ## §4 Rendering
@@ -42,7 +42,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 4.2 Squash/stretch + scale as CATransform3D only (L)
 - [x] 4.3 Cadence 60/30/12 per policy (Zs excluded from 60-triggers — sleep tier wins); paused when hidden/locked/display-asleep/terminating (M)
 - [x] 4.4 Timer independent of frame cadence (wall-clock DispatchSourceTimer) (T)
-- [x] 4.5 Hearts row (2+i·6, y=8 — native deviation: the prototype's y=2 collides with the clock once ≥4 hearts persist), max 8 (S)
+- [x] 4.5 Hearts tally ♥×n top-left + clock right-aligned, one y=2 line (native deviation, owner-directed: the prototype's per-heart row collides with a centered clock at ≥4 persisted hearts and caps at 8; tally counts to 99, 130 ms pop on land) (S, L: tally-idle.png, tally-flight.png, tally-landed.png)
 - [x] 4.6 Clock 3×5 font centered, visibility rule, colon 500 ms, panic RED/TXT 250 ms (S,L)
 - [x] 4.7 Progress bar 20×(1×3) at (8+i·2, 41), ceil(frac·20), AMBER ≤60 s, panic alternation, pop color 130 ms (S,L)
 - [x] 4.8 Creature at bx=21(+wiggle/shake), by per character/variant (S, ASCII dumps)
@@ -84,7 +84,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 7.3 Notice 250 ms P / ears perk 600 ms M (S, dumps)
 - [x] 7.4 Pat: squint+blush+MINI_HEART(7 px/s, 1.1 s)+pat sound P; slow-blink 0/250/800/1300 + purr 1450 ms cycle M (T,S,L)
 - [x] 7.5 Moods: happy (¬panic ¬sleep), Mochi kneads 300 ms when happy+idle+¬walking, sad flat eyes+frown (+M flat ears) (T,S,L)
-- [x] 7.6 Hearts: 1/session, flight 900 ms + sin arc 7 px, count++ + blip a frame later (prototype-exact), today ≤8 in row, lifetime in menu (T,L)
+- [x] 7.6 Hearts: 1/session, flight 900 ms + sin arc 7 px into the ♥ tally glyph, count++ + blip a frame later (prototype-exact deferral) + 130 ms glyph flash, tally shows today to 99, lifetime in menu (T,L: tally-landed.png)
 - [x] 7.7 Sleep Zs 1.7 s (38,14) rise 3.5, life 1.8; opacity 0.88; glow ×0.45; Pip Z x-sway, Mochi straight (T,L)
 - [x] 7.8 Pip panic shake ±1, wide 2×2, small mouth, red !! 400 ms, sweat 0.9 s (20,16) vx9 vy−6 g42 (T,S,L)
 - [x] 7.9 Confetti (28,22), vx ±20, vy −30..−75, g 65, life 1.4–1.9, 5 colors, cull y≥47 (T,W)

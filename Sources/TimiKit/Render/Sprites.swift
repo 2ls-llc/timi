@@ -4,6 +4,8 @@ import Foundation
 public enum Sprites {
     public static let HEART = [".#.#.", "#####", ".###.", "..#.."]
     public static let MINI_HEART = ["#.#", "###", ".#."]
+    /// multiplication sign for the ♥×n tally (3×3 so it reads ×, not a letter X)
+    public static let CROSS = ["#.#", ".#.", "#.#"]
     public static let ZGLYPH = ["###", ".#.", "###"]
     public static let FEET_A = "..##.....##.."
     public static let FEET_B = "...##...##..."

@@ -154,6 +154,8 @@ public final class PalEngine {
     public var doneT = -1e9
     public var prevSegs = -1
     public var segPopT = -1e9
+    /// set when the flying heart lands — the ♥ tally glyph flashes for 130 ms
+    public var heartPopT = -1e9
     public var segPopI = -1
     public var noticeT = -1e9
     public var prevHovered = false
@@ -518,10 +520,11 @@ public final class PalEngine {
         }
         miniHearts.removeAll { $0.life <= 0 }
 
-        // flying heart progression. The prototype draws the mini heart at the slot
-        // on the landing frame and the row count only grows on the NEXT frame (the
-        // row is painted before the flyHeart block increments) — replicated via a
-        // deferred increment.
+        // flying heart progression. The prototype draws the mini heart at its
+        // target on the landing frame and the tally only grows on the NEXT frame
+        // (the tally is painted before the flyHeart block increments) —
+        // replicated via a deferred increment, so the count ticks as the pop
+        // flash starts.
         if pendingHeartLand {
             pendingHeartLand = false
             hearts += 1
@@ -529,13 +532,13 @@ public final class PalEngine {
         var flyHeartPos: Vec2?
         if let fh = flyHeart, t >= fh.t0 {
             let k = clamp((t - fh.t0) / 900, 0, 1)
-            let slot = Double(min(hearts, 7))
-            let ex = lerp(fh.x, 3 + slot * 6, k)
-            let ey = lerp(fh.y, 9, k) - sin(k * .pi) * 7  // slot center in the y=8 hearts row
+            let ex = lerp(fh.x, 4, k)
+            let ey = lerp(fh.y, 4, k) - sin(k * .pi) * 7  // the ♥×n tally glyph, top-left
             flyHeartPos = Vec2(ex, ey)
             if k >= 1 {
                 flyHeart = nil
                 pendingHeartLand = true
+                heartPopT = t
                 out.sounds.append(.blip)
                 out.events.append(.heartLanded)
             }

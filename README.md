@@ -15,7 +15,7 @@ pixel-for-pixel.
 
 On the desktop:
 
-![Timi on the desktop](Tests/snapshots/m7-mochi-hover-strip.png)
+![Timi on the desktop](Tests/snapshots/hero-hover.png)
 
 ## What she does
 

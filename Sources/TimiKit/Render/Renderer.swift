@@ -11,11 +11,15 @@ public enum Renderer {
 
         canvas.clear()
 
-        // hearts row — one band below the clock line (the prototype drew both at
-        // y=2, but hearts persist per day natively, so a 4th heart would run
-        // straight under the centered digits)
-        for i in 0..<min(e.hearts, 8) {
-            canvas.sprite(Sprites.HEART, 2 + i * 6, 8, pal.pink)
+        // hearts tally — ♥×n, top-left, sharing the clock line (arcade HUD:
+        // score left, time right). The prototype drew one sprite per heart, but
+        // hearts persist per day natively, so a row would crowd the 56 px canvas
+        // and silently cap at 8; the counter stays 13–17 px and counts to 99.
+        if e.hearts > 0 {
+            let popping = t - e.heartPopT < 130
+            canvas.sprite(Sprites.HEART, 2, 3, popping ? pal.segPop : pal.pink)
+            canvas.sprite(Sprites.CROSS, 8, 3, pal.pink)
+            canvas.text("\(min(e.hearts, 99))", 12, 2, pal.pink)
         }
         // flying heart
         if let fp = f.flyHeartPos {
@@ -31,7 +35,9 @@ public enum Renderer {
             let s = formatMillis(e.mode == .idle ? e.durationMs : e.remainingMs)
             let colonOn = !f.running || Int(floor(t / 500)) % 2 == 0
             let color = f.panic ? (Int(floor(t / 250)) % 2 == 1 ? pal.red : pal.txt) : pal.txt
-            canvas.text(s, jsRound(28 - Double(Font3x5.width(s)) / 2), 2, color, colonOn: colonOn)
+            // right-aligned (2 px margin, mirroring the tally's left margin);
+            // even ♥×99 vs a 480:00 clock leaves 14 px of air between them
+            canvas.text(s, 54 - Font3x5.width(s), 2, color, colonOn: colonOn)
         }
         // done banner
         if e.mode == .done && t - e.doneT < 2200 {
