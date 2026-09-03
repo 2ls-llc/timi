@@ -11,9 +11,11 @@ public enum Renderer {
 
         canvas.clear()
 
-        // hearts row
+        // hearts row — one band below the clock line (the prototype drew both at
+        // y=2, but hearts persist per day natively, so a 4th heart would run
+        // straight under the centered digits)
         for i in 0..<min(e.hearts, 8) {
-            canvas.sprite(Sprites.HEART, 2 + i * 6, 2, pal.pink)
+            canvas.sprite(Sprites.HEART, 2 + i * 6, 8, pal.pink)
         }
         // flying heart
         if let fp = f.flyHeartPos {

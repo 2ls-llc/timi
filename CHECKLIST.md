@@ -42,7 +42,7 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 - [x] 4.2 Squash/stretch + scale as CATransform3D only (L)
 - [x] 4.3 Cadence 60/30/12 per policy (Zs excluded from 60-triggers — sleep tier wins); paused when hidden/locked/display-asleep/terminating (M)
 - [x] 4.4 Timer independent of frame cadence (wall-clock DispatchSourceTimer) (T)
-- [x] 4.5 Hearts row (2+i·6, 2), max 8 (S)
+- [x] 4.5 Hearts row (2+i·6, y=8 — native deviation: the prototype's y=2 collides with the clock once ≥4 hearts persist), max 8 (S)
 - [x] 4.6 Clock 3×5 font centered, visibility rule, colon 500 ms, panic RED/TXT 250 ms (S,L)
 - [x] 4.7 Progress bar 20×(1×3) at (8+i·2, 41), ceil(frac·20), AMBER ≤60 s, panic alternation, pop color 130 ms (S,L)
 - [x] 4.8 Creature at bx=21(+wiggle/shake), by per character/variant (S, ASCII dumps)

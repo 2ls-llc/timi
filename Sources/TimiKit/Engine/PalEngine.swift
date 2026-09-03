@@ -531,7 +531,7 @@ public final class PalEngine {
             let k = clamp((t - fh.t0) / 900, 0, 1)
             let slot = Double(min(hearts, 7))
             let ex = lerp(fh.x, 3 + slot * 6, k)
-            let ey = lerp(fh.y, 3, k) - sin(k * .pi) * 7
+            let ey = lerp(fh.y, 9, k) - sin(k * .pi) * 7  // slot center in the y=8 hearts row
             flyHeartPos = Vec2(ex, ey)
             if k >= 1 {
                 flyHeart = nil

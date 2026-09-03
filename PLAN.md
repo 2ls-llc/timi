@@ -193,7 +193,11 @@ since both files are identical there (modulo palette + pop color + flash alpha 0
     persisted hearts ≥ 8 the row stays at 8 (`min(hearts,8)`), like the prototype.
 20. **Menu-bar icon**: 1-bit mini portrait of the active character; `isTemplate` when idle,
     colored when running; optional `12:34` text next to it (setting).
-21. **Resting-spot insets** (refinement pass): the prototype clamps `home` 90 pt inside its
+21. **Hearts row at y=8** (owner-reported fix): the prototype draws hearts and the
+    centered clock in the same y=2 band and lets the digits overwrite hearts 4+ —
+    invisible there because web hearts reset per page load. Native hearts persist
+    per day, so the row moved one band down (flyHeart lands at y=9 to match).
+22. **Resting-spot insets** (refinement pass): the prototype clamps `home` 90 pt inside its
     container on every side. Natively the hover strip hangs 110 pt below the creature
     and its chip row is ~235 pt wide, so the bottom inset is 120 pt and the sides 125 pt
     (top stays 90) — a cat parked in a bottom corner keeps her presets in front of the
