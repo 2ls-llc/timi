@@ -199,8 +199,10 @@ since both files are identical there (modulo palette + pop color + flash alpha 0
     sprite per completion and the clock centered, both at y=2 — fine on the web
     where hearts reset per page load, but native hearts persist per day, so the
     row collided with the digits at 4 hearts and silently capped at 8. Replaced
-    with an arcade HUD on a single y=2 line: a `♥×n` tally top-left (heart sprite,
-    3×3 × glyph, count to 99, pink) and the clock right-aligned ending at x=53
+    with an arcade HUD on a single y=2 line: a `♥×n` tally top-left (a 5×5 heart
+    spanning the font's cap line to baseline — the prototype's 4-row heart hung
+    a pixel low beside the digits — a 3×3 × centered on the middle row, count to
+    99, pink) and the clock right-aligned ending at x=53
     (2 px margins both sides). Worst case (`♥×99` vs `480:00`) leaves 14 px of
     air; the centered done banner clears both. Tally idiom over pips: hearts are
     unbounded accumulation (coins/score), not bounded capacity (health).

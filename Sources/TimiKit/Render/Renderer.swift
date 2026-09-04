@@ -17,7 +17,8 @@ public enum Renderer {
         // and silently cap at 8; the counter stays 13–17 px and counts to 99.
         if e.hearts > 0 {
             let popping = t - e.heartPopT < 130
-            canvas.sprite(Sprites.HEART, 2, 3, popping ? pal.segPop : pal.pink)
+            // heart and digits share rows 2–6; the × is centered on row 4
+            canvas.sprite(Sprites.TALLY_HEART, 2, 2, popping ? pal.segPop : pal.pink)
             canvas.sprite(Sprites.CROSS, 8, 3, pal.pink)
             canvas.text("\(min(e.hearts, 99))", 12, 2, pal.pink)
         }
