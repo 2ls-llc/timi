@@ -6,8 +6,8 @@
 # Environment:
 #   VERSION            marketing version stamped into Info.plist (default 0.1.0)
 #   CODESIGN_IDENTITY  signing identity (default "-" = ad-hoc). Ad-hoc builds run
-#                      locally; Gatekeeper on other Macs wants the notarized build
-#                      (see notarize.sh) or `brew install --no-quarantine`.
+#                      locally; on other Macs Gatekeeper blocks them until the user
+#                      clicks Open Anyway, unless the build is notarized (notarize.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

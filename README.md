@@ -42,20 +42,22 @@ On the desktop:
 ## Install
 
 ```sh
-brew install 2ls/tap/timi
+brew install 2ls-llc/tap/timi
 ```
 
-(The tap repo is `2ls/homebrew-tap`.) Until releases are signed and
-notarized, macOS quarantine will block the app; install with:
+(The tap repo is [`2ls-llc/homebrew-tap`](https://github.com/2ls-llc/homebrew-tap).)
 
-```sh
-brew install --no-quarantine 2ls/tap/timi
-```
+**First launch:** releases aren't notarized by Apple yet, so macOS blocks
+Timi the first time. Open her once and click **Done**, then go to
+**System Settings → Privacy & Security** and click **Open Anyway**. Each
+update needs this once more until releases are signed. (Comfortable in
+Terminal? `xattr -dr com.apple.quarantine /Applications/Timi.app` does the
+same thing.)
 
 Or build from source:
 
 ```sh
-git clone https://github.com/2ls/timi && cd timi
+git clone https://github.com/2ls-llc/timi && cd timi
 ./Packaging/build.sh          # → dist/Timi.app (universal, sandboxed, ad-hoc signed)
 ```
 
@@ -156,15 +158,20 @@ APPLE_ID=… APPLE_TEAM_ID=… APP_PASSWORD=… ./Packaging/notarize.sh
 VERSION=0.1.0 ./Packaging/release.sh    # zip + sha256 for the cask
 ```
 
+Every push to `main` runs `.github/workflows/ci.yml` (tests + universal build).
 Tagging `v*` runs `.github/workflows/release.yml`: tests → universal build →
-sign + notarize when secrets exist (otherwise an ad-hoc build with a note in
-the release) → GitHub Release → PR bumping `Casks/timi.rb` in
-`2ls/homebrew-tap`.
+sign + notarize when secrets exist (otherwise an ad-hoc build with first-launch
+instructions in the release notes) → GitHub Release → PR bumping
+`Casks/timi.rb` in `2ls-llc/homebrew-tap` (when the `TAP_GITHUB_TOKEN` secret
+is set).
 
 ## Credits
 
 Timi was designed as a web prototype (included under `Prototype/`, where she
 went by a working name). The native port keeps her soul intact: every constant,
 every fidget probability, every one of her tail-physics ease rates.
+
+Global hotkeys use [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts)
+by Sindre Sorhus (MIT License; the notice is in Settings › About).
 
 © Two Ls LLC

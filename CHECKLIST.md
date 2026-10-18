@@ -111,9 +111,9 @@ P = pip-timer-v4-3.jsx, the removed second prototype (historical citations).
 ## §11 Packaging (M7)
 - [x] 11.1 Bundle id com.2ls.timi; Timi.app; cask token timi (never "pip")
 - [x] 11.2 build.sh (universal, verified: x86_64+arm64, sandbox entitlement, launches) / notarize.sh / release.sh (zip+sha256 verified)
-- [x] 11.3 Homebrew cask per spec + README brew instructions (tap: 2ls/homebrew-tap)
-- [x] 11.4 release.yml: tests → build → sign+notarize if secrets else ad-hoc with release note → Release → tap bump PR
-- [x] 11.5 Ad-hoc signed sandboxed build verified running; --no-quarantine documented in README + release notes
+- [x] 11.3 Homebrew cask per spec + README brew instructions (tap: 2ls-llc/homebrew-tap; caveats explain the unsigned first launch)
+- [x] 11.4 release.yml: tests → build → sign+notarize if secrets else ad-hoc with release note → Release → tap bump PR (when TAP_GITHUB_TOKEN is set); ci.yml runs tests + build on every push
+- [x] 11.5 Ad-hoc signed sandboxed build verified running; Open Anyway first-launch steps in README, cask caveats, and release notes (Homebrew 7 removed --no-quarantine)
 
 ## §12 Quality bar
 - [x] 12.1 CPU measured (see 1.4) — numbers in README

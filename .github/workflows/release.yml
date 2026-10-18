@@ -9,12 +9,19 @@ permissions:
 
 jobs:
   release:
-    runs-on: macos-14
+    runs-on: macos-26
+    env:
+      # Job-level: secrets can't appear in a step's `if`, and a step's own env
+      # isn't visible to its `if` either.
+      TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app || true
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app
+          xcodebuild -version
+          swift --version
 
       - name: Derive version
         id: version
@@ -75,28 +82,33 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
           SIGNED: ${{ steps.signing.outputs.signed }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
         run: |
-          if [ "$SIGNED" = "true" ]; then
-            NOTES="Signed and notarized build."
-          else
-            NOTES="⚠️ Unsigned (ad-hoc) build — no signing secrets were configured. \
-          Install with \`brew install --no-quarantine 2ls/tap/timi\` or clear \
-          quarantine manually: \`xattr -dr com.apple.quarantine /Applications/Timi.app\`."
-          fi
+          {
+            echo 'Install with `brew install 2ls-llc/tap/timi`.'
+            echo
+            if [ "$SIGNED" = "true" ]; then
+              echo "Signed and notarized build."
+            else
+              echo "This build isn't notarized by Apple yet, so macOS blocks its first launch."
+              echo "Open Timi once and click **Done**, then go to **System Settings → Privacy & Security**"
+              echo "and click **Open Anyway**. Each update needs this once more until releases are signed."
+            fi
+            echo
+            echo "sha256: \`$SHA256\`"
+          } > release-notes.md
           gh release create "v$VERSION" \
             "dist/Timi-$VERSION.zip" \
             --title "Timi $VERSION" \
-            --notes "$NOTES
-          sha256: ${{ steps.package.outputs.sha256 }}"
+            --notes-file release-notes.md
 
       - name: Open tap bump PR
-        if: ${{ env.TAP_TOKEN != '' }}
+        if: env.TAP_TOKEN != ''
         env:
-          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
           SHA256: ${{ steps.package.outputs.sha256 }}
         run: |
-          git clone "https://x-access-token:$TAP_TOKEN@github.com/2ls/homebrew-tap.git" tap
+          git clone "https://x-access-token:$TAP_TOKEN@github.com/2ls-llc/homebrew-tap.git" tap
           cd tap
           mkdir -p Casks
           sed -e "s/^  version .*/  version \"$VERSION\"/" \
@@ -105,9 +117,10 @@ jobs:
           BRANCH="timi-$VERSION"
           git checkout -b "$BRANCH"
           git add Casks/timi.rb
-          git -c user.name=timi-bot -c user.email=bot@2ls.com \
-            commit -m "timi $VERSION"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "timi $VERSION"
           git push origin "$BRANCH"
-          GH_TOKEN=$TAP_TOKEN gh pr create --repo 2ls/homebrew-tap \
+          GH_TOKEN=$TAP_TOKEN gh pr create --repo 2ls-llc/homebrew-tap \
             --head "$BRANCH" --title "timi $VERSION" \
             --body "Automated bump from the timi release workflow."

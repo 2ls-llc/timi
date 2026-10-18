@@ -125,7 +125,15 @@ struct SettingsView: View {
                 Text("A tiny pixel cat that lives on your desktop and keeps your focus timer. Timi was born as a web prototype; this is her native home.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Link("Timi on GitHub", destination: URL(string: "https://github.com/2ls/timi")!)
+                Link("Timi on GitHub", destination: URL(string: "https://github.com/2ls-llc/timi")!)
+                DisclosureGroup("Acknowledgements") {
+                    Text("Global hotkeys: KeyboardShortcuts by Sindre Sorhus")
+                        .font(.caption)
+                    Text(Acknowledgements.keyboardShortcuts)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
                 Text("© Two Ls LLC")
                     .font(.caption)
                     .foregroundStyle(.secondary)
