@@ -85,14 +85,25 @@ jobs:
           SHA256: ${{ steps.package.outputs.sha256 }}
         run: |
           {
-            echo 'Install with `brew install 2ls-llc/tap/timi`.'
+            echo 'Install Timi with this command:'
+            echo
+            echo '```sh'
+            echo 'brew install 2ls-llc/tap/timi'
+            echo '```'
             echo
             if [ "$SIGNED" = "true" ]; then
-              echo "Signed and notarized build."
+              echo "This build has a Developer ID signature, and Apple notarized it."
             else
-              echo "This build isn't notarized by Apple yet, so macOS blocks its first launch."
-              echo "Open Timi once and click **Done**, then go to **System Settings → Privacy & Security**"
-              echo "and click **Open Anyway**. Each update needs this once more until releases are signed."
+              echo "Apple did not notarize this build, so macOS blocks Timi the first time you open her. To open Timi:"
+              echo
+              echo "1. Open Timi from your Applications folder."
+              echo "2. When macOS shows an alert, click **Done**."
+              echo "3. Open **System Settings > Privacy & Security**."
+              echo "4. Find the message about Timi."
+              echo "5. Click **Open Anyway**."
+              echo "6. If macOS asks for your password, enter it."
+              echo
+              echo "You must do these steps again after each update, until we sign and notarize the releases."
             fi
             echo
             echo "sha256: \`$SHA256\`"

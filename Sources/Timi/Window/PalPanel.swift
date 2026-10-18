@@ -11,7 +11,8 @@ enum PanelGeometry {
     static let canvasSize = NSSize(width: 168, height: 144)
     static let glowSize = NSSize(width: 260, height: 230)
     /// Creature reaction halo (the prototype's canvas hover area), panel coords —
-    /// drives gaze, the hover scale, the strip reveal, and cadence.
+    /// drives the hover scale, ear perk, clock visibility, strip reveal, and
+    /// cadence. (Gaze is separate: a 300 pt radius around the cat.)
     static var creatureRect: NSRect {
         NSRect(x: creatureCenter.x - canvasSize.width / 2,
                y: creatureCenter.y - canvasSize.height / 2,

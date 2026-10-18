@@ -6,7 +6,7 @@ cask "timi" do
 
   url "https://github.com/2ls-llc/timi/releases/download/v#{version}/Timi-#{version}.zip"
   name "Timi"
-  desc "Pixel cat that lives on your desktop and keeps your focus timer"
+  desc "Pixel cat on your desktop that runs a focus timer"
   homepage "https://github.com/2ls-llc/timi"
 
   livecheck do
@@ -25,10 +25,15 @@ cask "timi" do
   ]
 
   caveats <<~EOS
-    Timi isn't notarized by Apple yet, so macOS blocks her first launch.
-    Open Timi once and click Done, then go to
-      System Settings > Privacy & Security
-    and click "Open Anyway". Each update needs this once more until
-    releases are signed.
+    Apple did not notarize this build, so macOS blocks Timi the first time
+    you open her. To open Timi:
+      1. Open Timi from your Applications folder.
+      2. When macOS shows an alert, click Done.
+      3. Open System Settings > Privacy & Security.
+      4. Find the message about Timi.
+      5. Click Open Anyway.
+      6. If macOS asks for your password, enter it.
+    You must do these steps again after each update, until we sign and
+    notarize the releases.
   EOS
 end

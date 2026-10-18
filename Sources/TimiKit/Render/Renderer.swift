@@ -37,7 +37,7 @@ public enum Renderer {
             let colonOn = !f.running || Int(floor(t / 500)) % 2 == 0
             let color = f.panic ? (Int(floor(t / 250)) % 2 == 1 ? pal.red : pal.txt) : pal.txt
             // right-aligned (2 px margin, mirroring the tally's left margin);
-            // even ♥×99 vs a 480:00 clock leaves 14 px of air between them
+            // even ♥×99 vs the longest clock (90:00) leaves 18 px of air
             canvas.text(s, 54 - Font3x5.width(s), 2, color, colonOn: colonOn)
         }
         // done banner
