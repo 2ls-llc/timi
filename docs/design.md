@@ -313,6 +313,19 @@ movement is less than 0.05 pt.
 
 The timer never depends on the frame rate.
 
+### Measurements
+
+These values come from `top -pid` on an Apple silicon Mac, with a release
+build. Each value covers sample runs of several seconds. The budget from the
+original specification is in parentheses.
+
+| State | CPU |
+|---|---|
+| Idle on the desktop (30 fps) | 1.4–2.2%, average about 1.8% (< 2%) |
+| Napping during a session (12 fps, ticks silent) | 0.9–1.5% (< 2%) |
+| Running with audible ticks (30 fps and synth) | 2.9–3.3% (< 4%) |
+| Finish (60 fps, confetti, fanfare) | peak 9.3% (< 12%) |
+
 ## Tests
 
 `swift test` runs 116 tests in nine suites.

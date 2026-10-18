@@ -50,6 +50,8 @@ Most items name the checks that cover them:
 - The panel is a borderless, non-activating `NSPanel` at the `.floating` level.
   It is clear and has no shadow. It stays visible when the app is not active
   (`hidesOnDeactivate = false`).
+- Timi does not take focus from your current app. Only the Settings window and
+  the **Custom…** dialog take focus, and they give it back when they close.
 - The panel shows on all Spaces and over full-screen apps, and it is not in the
   window cycle. The flags are `canJoinAllSpaces`, `fullScreenAuxiliary`, and
   `ignoresCycle`.
@@ -256,6 +258,8 @@ Most items name the checks that cover them:
   - While you hold Timi, her eyes look down.
 - When the pointer enters the halo, her ears perk for 600 ms. Checked by:
   snapshot, dump.
+- Her ears lie flat during the hunt, when she is sad, and in a drag or a flight
+  faster than 420 pt/s. Checked by: snapshot, dump.
 - A pat gives these reactions. Checked by: unit, snapshot, live.
   - A slow blink, with phases at 0, 250, 800, and 1300 ms
   - A blush
